@@ -16,6 +16,15 @@ class Slide:
 # Matches HTML comments, including multi-line ones.
 _COMMENT_RE = re.compile(r"<!--(.*?)-->", re.DOTALL)
 
+# Marp directive comments start with an underscore or a known directive keyword.
+# These should not be treated as speaker notes.
+_DIRECTIVE_RE = re.compile(
+    r"^\s*_?\s*(class|paginate|header|footer|backgroundColor|backgroundImage|"
+    r"backgroundPosition|backgroundRepeat|backgroundSize|color|theme|math|marp|"
+    r"size|style|headingDivider|lang|title|description|author|image|keywords|url)\b",
+    re.IGNORECASE,
+)
+
 
 def parse_marp(path: str) -> list[Slide]:
     """Parse a Marp markdown file into a list of Slide objects.
@@ -44,7 +53,11 @@ def parse_marp(path: str) -> list[Slide]:
         notes_fragments: list[str] = []
 
         def _collect(m: re.Match) -> str:
-            notes_fragments.append(m.group(1).strip())
+            content = m.group(1).strip()
+            # Skip Marp directive comments (e.g. <!-- _class: lead -->)
+            if _DIRECTIVE_RE.match(content):
+                return ""
+            notes_fragments.append(content)
             return ""
 
         body = _COMMENT_RE.sub(_collect, part).strip()

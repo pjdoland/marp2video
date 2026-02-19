@@ -83,22 +83,27 @@ def generate_audio_for_slides(
         else:
             try:
                 sentences = _split_sentences(slide.notes)
+                # Group sentences into chunks of 4 for more natural generation
+                sentence_groups = [
+                    " ".join(sentences[i:i + 4])
+                    for i in range(0, len(sentences), 4)
+                ]
                 chunks: list = []
-                for j, sentence in enumerate(sentences):
+                for j, group in enumerate(sentence_groups):
                     wav = model.generate(
-                        sentence,
+                        group,
                         audio_prompt_path=voice_path,
                         exaggeration=exaggeration,
                         cfg_weight=cfg_weight,
                         temperature=temperature,
                     )
                     chunks.append(wav)
-                    if len(sentences) > 1:
-                        print(f"  Slide {slide.index}: sentence {j + 1}/{len(sentences)} OK")
+                    if len(sentence_groups) > 1:
+                        print(f"  Slide {slide.index}: chunk {j + 1}/{len(sentence_groups)} OK")
 
                 combined = torch.cat(chunks, dim=1)
                 torchaudio.save(str(out_path), combined, model.sr)
-                print(f"  Slide {slide.index}: TTS OK ({len(sentences)} sentence{'s' if len(sentences) != 1 else ''})")
+                print(f"  Slide {slide.index}: TTS OK ({len(sentences)} sentence{'s' if len(sentences) != 1 else ''} in {len(sentence_groups)} chunk{'s' if len(sentence_groups) != 1 else ''})")
             except Exception as exc:
                 msg = f"Slide {slide.index}: TTS failed ({exc}), substituting silence"
                 print(f"  {msg}", file=sys.stderr)

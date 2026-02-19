@@ -89,7 +89,7 @@ style: |
 
 ### Narrated presentations from Markdown
 
-<!-- I want to talk to you today about a problem I've been dealing with for a while. My name's Patrick, I work on developer tooling, and I spend a lot of time making demo videos and training content. And over the past year or so I've gotten increasingly frustrated with how that process works. So I built something to fix it. -->
+<!-- My name is PJ. Occasionally I have to make demo or training videos. Over the past year I've gotten increasingly frustrated with the process of doing this. So I built something to fix it. -->
 
 ---
 
@@ -100,18 +100,18 @@ style: |
 - You stumble over words, re-record, stumble again
 - Eventually you get something usable
 
-<!-- How many of you have had to record a demo or training video? Maybe for onboarding, a product walkthrough, something like that? If you want it to sound decent, you need to find a quiet room, set up a microphone, make sure there's no background noise. Then you record your script, and inevitably you stumble over a word or realize you said something wrong. So you do another take. And another. And eventually you get something usable. -->
+<!-- If you want the audio to sound decent, you need to find a quiet room, set up a microphone, make sure there's no background noise. Then you record your script, and inevitably you stumble over a word or realize you said something wrong. So you do another take. And another. Eventually you get something usable. -->
 
 ---
 
 ## The Worse Problem
 
 - A week later, you need to update that video
-- The API changed, or there's a better way to explain something
-- Re-record the whole thing, or splice in a patch that never matches
+- Maybe the API changed, or there's a better way to explain something
+- You can re-record the whole thing, or splice in a patch that never matches
 
-> Updating a training video used to take me 45 minutes of re-recording.
-> Now it takes 30 seconds of editing Markdown.
+> Updating a training video used to take hours.
+> iMovie seems unnecessarily complicated for simple decks with narration or a screencast.
 
 <!-- But here's where it gets worse. A week later, you need to update that video. Maybe the API changed, or there's a new feature, or you just found a better way to explain something. Now you have two choices. Re-record the entire thing to keep the audio consistent, or record just the changed section and try to splice it in. And it never quite matches. The tone is different, the room sounds different, the energy level is off. So most of us just live with outdated training materials because updating them is such a hassle. Updating a single training video used to cost me 45 minutes of re-recording. Now I edit the Markdown and regenerate. Thirty seconds. -->
 
@@ -172,7 +172,7 @@ Run one command. Get a narrated video.
 - Together they satisfy WCAG multimedia text-alternative requirements
 - No separate captioning or transcription step needed
 
-<!-- There's an accessibility angle here that doesn't get enough attention. WCAG guidelines require text alternatives for multimedia content. Usually that means someone has to go back and caption the video or write a transcript after the fact. It's tedious, so it often doesn't happen, or it gets done badly. With marp2video, you wrote the transcript first. The speaker notes are the script. The slide content gives you structure. You already satisfy the text-alternative requirement before the video even exists. The accessible version comes first because the text is the source material, not something derived after the fact. -->
+<!-- There's an accessibility angle here that I think is underappreciated. WCAG guidelines require text alternatives for multimedia. Usually that means someone has to go back and caption the video or write a transcript after the fact. It's tedious, so it often doesn't happen, or it gets done badly. With marp2video, you wrote the transcript first. The speaker notes are the script. You satisfy the text-alternative requirement before the video even exists. The accessible version isn't an afterthought, it's the input. -->
 
 ---
 
@@ -186,7 +186,92 @@ Run one command. Get a narrated video.
                                        slide         → concat
 ```
 
-<!-- Under the hood, marp2video runs a four-stage pipeline. First, it parses your Markdown file, splits on slide delimiters, and pulls out speaker notes from HTML comments. Second, it calls Marp CLI to render each slide as a 1080p PNG. Third, it synthesizes the notes into audio using Chatterbox TTS. If you give it a short sample of your voice, it clones you. The output picks up your timbre, your cadence, the little things that make it sound like you. Finally, it builds one video segment per slide with ffmpeg, image looped over the audio duration, then concatenates them all into the final MP4. -->
+<!-- Under the hood, marp2video runs a four-stage pipeline. Parse the Markdown, render slides as PNGs with Marp CLI, synthesize audio with Chatterbox TTS, and stitch it all together with ffmpeg. If you give it a short sample of your voice, the TTS clones you. It picks up your timbre, your pacing, enough that people do a double take. Let me walk through each stage. -->
+
+---
+
+## Stage 1: Parsing
+
+- Splits the Markdown on `---` delimiters, the same separators Marp uses
+- First block is YAML front matter (theme, styles) -- skipped
+- HTML comments are extracted as speaker notes
+- Marp directive comments like `<!-- _class: lead -->` are filtered out
+- Each slide becomes a `Slide` dataclass: index, body text, and notes
+
+```python
+@dataclass
+class Slide:
+    index: int
+    body: str
+    notes: str | None
+```
+
+<!-- Parsing is the boring part, which is good. Split on triple-dash delimiters. The first block is YAML front matter, skip it. Then for each slide block, pull out the HTML comments. One wrinkle: Marp uses HTML comments for its own directives too, things like underscore-class or underscore-paginate. Those get filtered out with a regex so they don't end up in the narration. I learned that one the hard way when my first test video started reading out "class colon lead" in the middle of a sentence. What you're left with is a list of Slide dataclasses. Index, body, notes. That's it. -->
+
+---
+
+## Stage 2: Rendering
+
+- Calls Marp CLI via `npx @marp-team/marp-cli` or a global `marp` install
+- Renders the entire deck as PNG images at 2x scale for 1920x1080 output
+- Output files are numbered: `slides.001`, `slides.002`, etc.
+- A sanity check confirms the image count matches the parsed slide count
+
+```bash
+npx @marp-team/marp-cli presentation.md \
+    --images png --image-scale 2 --output slides
+```
+
+<!-- Rendering is just a subprocess call to Marp CLI. It checks for a global marp install first, falls back to npx if you don't have one. We ask for PNG output at 2x scale, which gets us 1920 by 1080 images. Marp numbers the output files as slides dot 001, slides dot 002, and so on. There's a sanity check after this step. If the parser found 12 slides but Marp only produced 11 images, we bail out immediately. Better to stop here than produce a video where slide 7's audio plays over slide 8's image and you don't notice until someone else watches it. -->
+
+---
+
+## Stage 3: TTS with Chatterbox
+
+- Chatterbox TTS runs locally -- no API calls, no data leaving your machine
+- Sentences are grouped into chunks of four before synthesis
+- Each chunk becomes a tensor, concatenated with `torch.cat` into one WAV
+- Voice cloning takes a short WAV sample of your voice
+- Slides without notes get a silence WAV written in pure Python
+
+```python
+# Chunking: 12 sentences → 3 TTS calls instead of 12
+sentence_groups = [" ".join(sentences[i:i+4])
+                   for i in range(0, len(sentences), 4)]
+```
+
+<!-- This is the slow part. Chatterbox is a neural TTS model, runs on your local GPU or CPU. You give it a WAV sample of your voice and it clones you. The first version of this generated one sentence at a time, and it sounded choppy. The model would reset its prosody at every sentence boundary. So now it groups four sentences together before each generation call. The difference is obvious. You get natural pacing across sentences because the model sees a full paragraph instead of fragments. Each chunk comes back as a tensor. We concatenate them all with torch dot cat and write one WAV per slide. For slides with no speaker notes, it just writes a silent WAV. That's pure Python, a RIFF header and zeroed sample data, no audio libraries needed for that part. -->
+
+---
+
+## Stage 4: Assembly with ffmpeg
+
+- Each slide becomes an MPEG-TS segment: image looped for the audio duration
+- Video uses `libx264` with the `stillimage` tune -- almost no bitrate wasted
+- Images are scaled and padded to exactly 1920x1080
+- Audio is encoded as 192 kbps AAC
+- Segments are concatenated with ffmpeg's concat demuxer into the final MP4
+
+```
+slide.png + audio.wav  ──▶  segment_001.ts
+slide.png + audio.wav  ──▶  segment_002.ts
+                            ...
+all .ts files  ──▶  concat demuxer  ──▶  output.mp4
+```
+
+<!-- Last stage. For each slide we build an MPEG transport stream segment. The PNG gets looped as video frames for exactly the duration of that slide's audio. We use x264 with the stillimage tuning flag, which tells the encoder that frames aren't changing. It figures out pretty quickly that every frame is identical and the video bitrate drops to almost nothing. Images get scaled and padded to 1920 by 1080 regardless of their original aspect ratio, so the output is always consistent. Audio goes through AAC at 192 kilobits. Then once all the segments exist, ffmpeg's concat demuxer joins them. That last step is just a stream copy. No re-encoding. It writes the final MP4 in a couple of seconds. -->
+
+---
+
+## When things go wrong
+
+- All intermediate files land in a single temp directory
+- If a stage fails, the temp directory is preserved -- go look at what happened
+- On success, it's cleaned up (or kept with `--keep-temp`)
+- Subprocess stderr is captured and only printed on failure
+- Files are zero-padded: `audio_001.wav`, `segment_001.ts`, easy to correlate
+
+<!-- So what happens when something breaks? Everything goes into one temp directory. PNGs, WAVs, transport stream segments, all of it. If a stage fails, that directory sticks around. You can go in and see exactly which slides rendered, which audio files got generated, where things stopped. It makes debugging pretty straightforward. On a successful run, the temp files get cleaned up unless you pass keep-temp. I use keep-temp a lot during testing because I want to listen to individual slide audio files before watching the whole video. The subprocess calls all capture standard error and only print it when something actually fails, so a normal run is just progress lines. -->
 
 ---
 
@@ -231,4 +316,4 @@ The repo is on GitHub -- happy to walk through the setup.
 
 *Questions?*
 
-<!-- And one more thing. I built the whole system in a couple of hours using Claude Code. The pipeline, the TTS integration, the CLI, the docs, all of it came together in an afternoon. That's marp2video. If you want to try it, the repo is on GitHub. I'm happy to walk anyone through the setup or answer questions. Thanks. -->
+<!-- One more thing. I built this in an afternoon with Claude Code. The whole pipeline, start to finish. That's marp2video. The repo is on GitHub if you want to try it. I'm happy to walk through the setup or answer questions. Thanks. -->
