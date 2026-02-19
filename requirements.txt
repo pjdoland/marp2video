@@ -1,0 +1,4 @@
+chatterbox-tts
+torch
+torchaudio
+python-frontmatter

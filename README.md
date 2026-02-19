@@ -1,0 +1,105 @@
+# marp2video
+
+Turn a [Marp](https://marp.app/) slide deck into a narrated video. Write your
+slides in Markdown, add speaker notes as HTML comments, and marp2video handles
+the rest: rendering, text-to-speech with voice cloning, and final MP4 assembly.
+
+## Quick Start
+
+```bash
+source setup.sh
+python -m marp2video presentation.md --voice voice-sample.wav
+```
+
+The setup script checks for system dependencies, creates a Python 3.11 virtual
+environment, installs packages, and activates the venv in your shell.
+
+## Requirements
+
+- **Python 3.11**
+- **Node.js / npm** (for marp-cli via npx)
+- **ffmpeg**
+
+On macOS:
+
+```bash
+brew install python@3.11 node ffmpeg
+```
+
+## Writing Slides
+
+Speaker notes go in HTML comments. Slides without notes get a silent hold.
+
+```markdown
+---
+marp: true
+---
+
+# Welcome
+
+<!-- This is the opening slide. The audience will hear this narration. -->
+
+---
+
+# Architecture
+
+<!-- Our system has three main components.
+Each one handles a different part of the pipeline. -->
+
+---
+
+# Questions?
+```
+
+## Usage
+
+```bash
+python -m marp2video <input.md> [options]
+```
+
+### Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output` | `<input>.mp4` | Output file path |
+| `--voice` | none | Reference WAV for voice cloning |
+| `--device` | `auto` | Torch device: `auto`, `cpu`, `cuda`, `mps` |
+| `--exaggeration` | `0.5` | Chatterbox vocal exaggeration |
+| `--cfg-weight` | `0.5` | Chatterbox classifier-free guidance weight |
+| `--temperature` | `0.8` | Chatterbox sampling temperature |
+| `--hold-duration` | `3.0` | Seconds to hold slides with no notes |
+| `--fps` | `24` | Output video framerate |
+| `--temp-dir` | system temp | Directory for intermediate files |
+| `--keep-temp` | off | Preserve intermediate files after rendering |
+
+### Examples
+
+```bash
+# Basic conversion (uses default TTS voice)
+python -m marp2video deck.md
+
+# Voice cloning with tuned generation parameters
+python -m marp2video deck.md \
+    --voice ~/models/my-voice.wav \
+    --output talk.mp4 \
+    --exaggeration 0.5 \
+    --cfg-weight 0.3 \
+    --temperature 0.6
+
+# Force CPU and keep intermediate files for debugging
+python -m marp2video deck.md \
+    --device cpu \
+    --keep-temp \
+    --temp-dir ./build
+```
+
+## How It Works
+
+1. **Parse** -- Split the Markdown on `---` delimiters, extract speaker notes
+   from `<!-- -->` comments.
+2. **Render** -- Call marp-cli to produce a PNG image per slide.
+3. **TTS** -- Synthesize each slide's notes with Chatterbox. Long notes are
+   split by sentence and reassembled into one WAV per slide. Slides without
+   notes become silent holds.
+4. **Assemble** -- Build a video segment per slide (image looped over the
+   audio duration), then concatenate everything into the final MP4 with ffmpeg.
