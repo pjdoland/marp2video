@@ -10,6 +10,7 @@ style: |
     --color-accent-light: #eff6ff;
     --color-muted: #6b7280;
     font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: -0.01em;
   }
   section {
     background: var(--color-bg);
@@ -19,12 +20,14 @@ style: |
   h1 {
     color: var(--color-accent);
     font-weight: 700;
+    letter-spacing: -0.02em;
   }
   h2 {
     color: var(--color-fg);
     border-bottom: 2px solid var(--color-accent);
     padding-bottom: 8px;
     font-weight: 600;
+    letter-spacing: -0.02em;
   }
   h3 {
     color: var(--color-muted);
@@ -38,10 +41,12 @@ style: |
     color: var(--color-accent);
     padding: 2px 6px;
     border-radius: 4px;
+    font-size: 0.9em;
   }
   pre code {
     background: #1e293b;
     color: #e2e8f0;
+    font-size: 1em;
   }
   pre {
     background: #1e293b;
@@ -56,6 +61,9 @@ style: |
   }
   ul, ol {
     line-height: 1.8;
+  }
+  li {
+    margin-bottom: 2px;
   }
   section.lead {
     display: flex;
@@ -89,29 +97,29 @@ style: |
 
 ### Narrated Video Presentations from Markdown
 
-<!-- Hello. My name is PJ. Occasionally I have to make demo or training videos. Over the past year I've gotten increasingly frustrated with my process for producing these. So I decided to do something about it. -->
+<!-- Hello, my name is PJ. Occasionally I have to make demo or training videos. Over the past year I've gotten increasingly frustrated with my process for producing these. So I decided to do something about it. -->
 
 ---
 
 ## The Problem
 
 - Recording narrated videos is tedious
-- Quiet room, decent mic, no background noise
-- Stumble over words, re-record, stumble again
+- You need a quiet room, a decent mic, and no background noise
+- You stumble over words, re-record, and stumble again
 - Eventually you get something usable
 
 <!-- If you want the audio to sound decent, you need a quiet room, a microphone, no background noise. Then you record your script, stumble over a word, do another take, and another. Eventually you get something usable. -->
 
 ---
 
-## The Worse Problem
+## The Real Problem
 
 - A week later, you need to update that video
-- The API changed, or there's a better way to explain something
+- The API changed, or you found a better way to explain something
 - Re-record the whole thing, or splice in a patch that never quite matches
 - So you just... don't update it
 
-<!-- But here's the part that really got to me. A week later, you need to update that video. Maybe the API changed, or you found a better way to explain something. You either re-record the whole thing, or splice in a new section that never quite matches. The tone is different, the room sounds different. I kept putting off updates because the re-recording took longer than the actual change. -->
+<!-- But here's the part that really got to me. A week later, you need to update that video. Maybe the API changed, or you found a better way to explain something. You either re-record the whole thing or splice in a new section that never quite matches. The tone is different, the room sounds different. I kept putting off updates because the re-recording took longer than the actual change. -->
 
 ---
 
@@ -122,40 +130,40 @@ style: |
 Write slides in Markdown. Add speaker notes.
 Run one command. Get a narrated video.
 
-<!-- So in my free time I built this thing called marp2video. The idea is simple. You write your presentation in Markdown using the Marp format, put your narration in the speaker notes as HTML comments, and run one command. It spits out an MP4 with narration in your voice. If you need to change something, you edit the text and regenerate. And it can all run locally on your laptop. -->
+<!-- So in my free time I built this thing called marp2video. The idea is simple. You write your presentation in Markdown using the Marp format, put your narration in the speaker notes as HTML comments, and run one command. It spits out an MP4 with narration in your own voice. If you need to change something, you edit the text and regenerate. And it can all run locally on your laptop. -->
 
 ---
 
 ## Why Not ElevenLabs?
 
-- Cloud TTS services charge per character -- adds up when you regenerate often
+- Cloud TTS services charge per character — adds up when you regenerate often
 - Your scripts and voice data go to third-party servers
 - Chatterbox TTS is MIT-licensed and runs entirely on your machine
 - No API keys, no usage limits, no data leaving your laptop
 
-<!-- I looked at ElevenLabs and similar services first. They're good, but they charge per character, which adds up if you're regenerating often. And your scripts go to their servers, which complicates things when proprietary information is involved. So I went with Chatterbox TTS instead. It's MIT Licensed and it runs entirely on your own machine. -->
+<!-- I looked at ElevenLabs and similar services first. They're good, but they charge per character, which adds up if you're regenerating often. And your scripts go to their servers, which complicates things when proprietary information is involved. So I went with Chatterbox TTS instead. It's MIT licensed and it runs entirely on your own machine. -->
 
 ---
 
 ## It's Just a Text File
 
 - One `.md` file contains your slides, your script, and your content
-- Plain text diffs cleanly in Git -- speaker note changes are just one-line diffs
-- Branch, review, and merge presentations the way you manage code
+- Plain text diffs cleanly in Git — speaker note changes are one-line diffs
+- Branch, review, and merge presentations the same way you manage code
 - The video is a build artifact, not the source of truth
-- Feed the same Markdown into RAG pipelines, semantic search, whatever
+- Feed the same Markdown into RAG pipelines, semantic search, or whatever else
 
-<!-- One benefit of this approach is that everything lives in a single Markdown file. Slides, speaker notes, all of it. It diffs cleanly in Git, so you can review changes in a pull request. Someone fixes a factual error in a speaker note, that's a one-line diff. The MP4 is just a build artifact. You could regenerate videos in CI if you wanted to. And because it's plain text, you can feed it straight into a RAG pipeline. An LLM can index it, search it, answer questions about it. With a video or a PowerPoint you'd need to transcribe audio, extract text from images. Markdown is already plain text. -->
+<!-- One benefit of this approach is that everything lives in a single Markdown file. Slides, speaker notes, all of it. It diffs cleanly in Git, so you can review changes in a pull request. Someone fixes a factual error in a speaker note? That's a one-line diff. The MP4 is just a build artifact. You could regenerate videos in CI if you wanted to. And because it's plain text, you can feed it straight into a RAG pipeline. An LLM can index it, search it, answer questions about it. With a video or a PowerPoint you'd need to transcribe audio or extract text from images. Markdown is already plain text. -->
 
 ---
 
 ## Accessibility for Free
 
-- Speaker notes *are* the transcript -- they exist before the video does
+- Speaker notes *are* the transcript — they exist before the video does
 - No separate captioning or transcription step
-- You get WCAG compliance without any extra work
+- WCAG compliance without any extra work
 
-<!-- WCAG guidelines require text alternatives for multimedia, which usually means someone has to go back and caption the video after the fact. It's tedious, so it often doesn't happen. But here you wrote the transcript first. The text alternative exists before the video does. -->
+<!-- WCAG guidelines require text alternatives for multimedia, which usually means someone has to go back and caption the video after the fact. It's tedious, so it often doesn't happen. But with this approach you wrote the transcript first. The text alternative exists before the video does. -->
 
 ---
 
@@ -189,7 +197,7 @@ class Slide:
     notes: str | None
 ```
 
-<!-- Parsing is the boring part, which is good. Split on triple-dash delimiters, skip the YAML front matter, pull out HTML comments as speaker notes. One wrinkle: Marp uses HTML comments for its own directives too, things like underscore-class or underscore-paginate. Those get filtered out with a regex. I learned that one the hard way when my first test video confidently announced "class colon lead" in the middle of a sentence. Very professional. What you're left with is a list of Slide dataclasses. Index, body, notes. -->
+<!-- Parsing is the boring part. Split on triple-dash delimiters, skip the YAML front matter, pull out HTML comments as speaker notes. Marp uses HTML comments for its own directives too, things like underscore-class or underscore-paginate. Those get filtered out with a regex. What you're left with is a list of Slide dataclasses. Index, body, notes. -->
 
 ---
 
@@ -205,15 +213,15 @@ npx @marp-team/marp-cli presentation.md \
     --images png --image-scale 2 --output slides
 ```
 
-<!-- Rendering is a subprocess call to Marp CLI. It checks for a global install first, falls back to npx. PNG output at 2x scale gets us 1920 by 1080 images. There's a sanity check: if the parser found 12 slides but Marp only produced 11 images, we bail out. Better to stop here than produce a video where slide 7's audio plays over slide 8's image. Ask me how I know. -->
+<!-- Rendering is a subprocess call to Marp CLI. It checks for a global install first, falls back to npx. PNG output at 2x scale gets us nineteen twenty by ten eighty images. There's a sanity check: if the parser found 12 slides but Marp only produced 11 images, we bail out. Better to stop here than produce a video where slide 7's audio plays over slide 8's image. -->
 
 ---
 
 ## Stage 3: TTS with Chatterbox
 
-- Chatterbox TTS runs locally -- no API calls, no data leaving your machine
+- Chatterbox TTS runs locally — no API calls, no data leaving your machine
 - Voice cloning from a short WAV sample of your voice
-- Sentences grouped into chunks, concatenated into one WAV per slide
+- Sentences are grouped into chunks and concatenated into one WAV per slide
 - Slides without notes get a silent WAV
 - Pronunciation overrides via a JSON mapping file
 
@@ -223,15 +231,15 @@ sentence_groups = [" ".join(sentences[i:i+3])
                    for i in range(0, len(sentences), 3)]
 ```
 
-<!-- This is the slow part. Chatterbox is a neural TTS model that runs on your local GPU or CPU. You give it a WAV sample of your voice and it clones you. Each chunk comes back as a tensor, we concatenate them with torch dot cat, one WAV per slide. Slides with no speaker notes get a silent WAV, just a RIFF header and zeroed samples. Oh, and if it mispronounces something, you can add a pronunciation override file. It's just a JSON file that maps words to phonetic respellings. Case insensitive, longest match first. -->
+<!-- This is the slow part. Chatterbox is a neural TTS model that runs on your local GPU or CPU. You give it a WAV sample of your voice and it clones you. Each chunk comes back as a tensor. We concatenate them with torch dot cat, one WAV per slide. Slides with no speaker notes get a silent WAV: just a RIFF header and zeroed samples. Oh, and if it mispronounces something, you can add a pronunciation override file. It's just a JSON file that maps words to phonetic respellings. Case-insensitive, longest match first. -->
 
 ---
 
 ## Stage 4: Assembly with ffmpeg
 
 - Each slide becomes an MPEG-TS segment: image looped for the audio duration
-- Video uses `libx264` with the `stillimage` tune -- almost no bitrate wasted
-- Images are scaled and padded to exactly 1920x1080
+- Video uses `libx264` with the `stillimage` tune — almost no bitrate wasted
+- Images are scaled and padded to exactly 1920 x 1080
 - Audio is encoded as 192 kbps AAC
 - Segments are concatenated with ffmpeg's concat demuxer into the final MP4
 
@@ -242,16 +250,16 @@ slide.png + audio.wav  ──▶  segment_002.ts
 all .ts files  ──▶  concat demuxer  ──▶  output.mp4
 ```
 
-<!-- Last stage. Each slide becomes an MPEG transport stream segment. The PNG loops as video frames for the duration of that slide's audio. We use x264 with the stillimage tuning flag, so the encoder figures out every frame is identical and the bitrate drops to almost nothing. Images get scaled and padded to 1920 by 1080. Audio goes through AAC at 192 kilobits. Then ffmpeg's concat demuxer joins all the segments. That last step is a stream copy, no re-encoding. Couple of seconds. -->
+<!-- Last stage. Each slide becomes an MPEG transport stream segment. The PNG loops as video frames for the duration of that slide's audio. We use x264 with the stillimage tuning flag, so the encoder figures out that every frame is identical and the bitrate drops to almost nothing. Images get scaled and padded to nineteen twenty by ten eighty. Audio is encoded as 192 kbps AAC. Then ffmpeg's concat demuxer joins all the segments. That last step is a stream copy, no re-encoding. Takes a couple of seconds. -->
 
 ---
 
 ## When Things Go Wrong
 
 - All intermediate files land in a single temp directory
-- If a stage fails, the temp dir is preserved so you can see what happened
-- On success, cleaned up (or kept with `--keep-temp`)
-- Files are zero-padded: `audio_001.wav`, `segment_001.ts` -- easy to correlate
+- If a stage fails, the temp directory is preserved for debugging
+- On success, it is cleaned up (or kept with `--keep-temp`)
+- Files are zero-padded: `audio_001.wav`, `segment_001.ts` — easy to correlate
 
 <!-- Everything goes into one temp directory. PNGs, WAVs, transport stream segments, all of it. If a stage fails, that directory sticks around so you can see where things stopped. On success it gets cleaned up, unless you pass keep-temp. I use keep-temp a lot because I like to listen to individual slide audio before watching the whole video. -->
 
@@ -264,12 +272,12 @@ source setup.sh
 python -m marp2video deck.md --voice my-voice.wav
 ```
 
-- Provide a short voice sample for cloning, or skip `--voice` for the default
-- GPU recommended -- CPU works but is slower
+- Provide a short voice sample for cloning, or omit `--voice` for the default
+- GPU recommended — CPU works but is slower
 - Tune with `--exaggeration`, `--cfg-weight`, `--temperature`
 - Fix mispronunciations with `--pronunciations overrides.json`
 
-<!-- For the voice sample, you can just record five to ten minutes of yourself reading varied content. Different emotions, different pacing. I actually booked an hour at a recording studio to do this, so I'd get the best quality sample possible. Then point it at your slide deck, pass in your voice file, and a couple minutes later you get an MP4. There are flags to tune expressiveness and cloning fidelity. I've been using it for my own stuff, but I think it'd work for internal docs and demos too. Or, you know, a for-loop and a folder of Markdown files and suddenly you have a YouTube empire of ten thousand AI-narrated brainrot videos. I'm not going to do that. Probably. -->
+<!-- For the voice sample, you can just record five to ten minutes of yourself reading varied content. Different emotions, different pacing. I actually booked an hour at a recording studio to do this so I'd get the best quality sample possible. Then point it at your slide deck, pass in your voice file, and a couple of minutes later you get an MP4. There are flags to tune expressiveness and cloning fidelity. I'll be using this for demos and training videos, but with a for-loop and a folder of Markdown files you could easily use this to build a YouTube empire of ten thousand AI-narrated brainrot videos. I'm not going to do that. Probably. -->
 
 ---
 
@@ -277,23 +285,24 @@ python -m marp2video deck.md --voice my-voice.wav
 
 This entire presentation was generated using *marp2video*.
 
-No microphone. No recording session. Just one Markdown file.
+No microphone. No recording session. Just a Markdown file.
 
 <!-- So, full disclosure. This presentation was generated with marp2video. You can probably tell. The cadence is a little off, some words land weird. But it still sounds better than what I would have actually recorded, which would be full of ums and ahs, pops, and breath sounds. The whole thing is a single Markdown file. If I needed to fix something, I'd edit the text and regenerate. The real me is probably getting coffee right now. -->
 
 ---
 
-<!-- _class: lead -->
 <!-- _paginate: false -->
 
 # Thanks
 
 *Total time: about 4 hours*
 
-1 hr recording my voice at a studio ($85) | 2.5 hrs building the tool in Claude Code | 30 min writing this deck in Vim
+- 1 hr recording my voice at a studio ($85)
+- 2.5 hrs building the tool with Claude Code
+- 30 min writing this deck in Vim
 
 github.com/pjdoland/marp2video
 
 *Questions?*
 
-<!-- So here's the actual time breakdown. One hour at Cue Recording Studios in Falls Church, Virginia, getting a studio-quality recording of my voice. That cost eighty-five bucks. Two and a half hours in Claude Code building the entire pipeline, start to finish. And about thirty minutes writing this presentation, mostly just editing text files in Vim with Claude helping. Then I kicked off the generation and walked away. That's it. The repo is on GitHub if you want to try it. I'm happy to walk through the setup or answer questions. Thanks. -->
+<!-- So here's the actual time breakdown. One hour at Cue Recording Studios in Falls Church, Virginia, getting a studio-quality recording of my voice. That cost eighty-five bucks. Two and a half hours with Claude Code building the entire pipeline, start to finish. And about thirty minutes writing this presentation, mostly just editing text files in Vim with Claude helping. Then I kicked off the generation and walked away. That's it. The repo is on GitHub if you want to try it. I'm happy to walk through the setup or answer questions. Thanks. -->
