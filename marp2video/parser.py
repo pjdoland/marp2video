@@ -11,6 +11,7 @@ class Slide:
     index: int
     body: str
     notes: str | None
+    video: str | None = None
 
 
 # Matches HTML comments, including multi-line ones.
@@ -24,6 +25,9 @@ _DIRECTIVE_RE = re.compile(
     r"size|style|headingDivider|lang|title|description|author|image|keywords|url)\b",
     re.IGNORECASE,
 )
+
+# Video directive: <!-- video: path/to/file.mov -->
+_VIDEO_RE = re.compile(r"^\s*video:\s*(.+?)\s*$", re.IGNORECASE)
 
 
 def parse_marp(path: str) -> list[Slide]:
@@ -51,11 +55,18 @@ def parse_marp(path: str) -> list[Slide]:
 
     for i, part in enumerate(slide_parts):
         notes_fragments: list[str] = []
+        video_path: str | None = None
 
         def _collect(m: re.Match) -> str:
+            nonlocal video_path
             content = m.group(1).strip()
             # Skip Marp directive comments (e.g. <!-- _class: lead -->)
             if _DIRECTIVE_RE.match(content):
+                return ""
+            # Extract video directive (e.g. <!-- video: demo.mov -->)
+            video_match = _VIDEO_RE.match(content)
+            if video_match:
+                video_path = video_match.group(1)
                 return ""
             notes_fragments.append(content)
             return ""
@@ -63,6 +74,6 @@ def parse_marp(path: str) -> list[Slide]:
         body = _COMMENT_RE.sub(_collect, part).strip()
         notes = "\n".join(notes_fragments) if notes_fragments else None
 
-        slides.append(Slide(index=i + 1, body=body, notes=notes))
+        slides.append(Slide(index=i + 1, body=body, notes=notes, video=video_path))
 
     return slides

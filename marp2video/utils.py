@@ -56,6 +56,39 @@ def generate_silent_wav(path: Path, duration: float, sample_rate: int = 24000) -
 
 def get_audio_duration(path: Path) -> float:
     """Get duration of an audio file in seconds using ffprobe."""
+    return _get_duration(path)
+
+
+def get_video_duration(path: Path) -> float:
+    """Get duration of a video file in seconds using ffprobe."""
+    return _get_duration(path)
+
+
+def get_video_fps(path: Path) -> float:
+    """Get the framerate of a video file using ffprobe."""
+    result = subprocess.run(
+        [
+            "ffprobe",
+            "-v", "quiet",
+            "-print_format", "json",
+            "-select_streams", "v:0",
+            "-show_streams",
+            str(path),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"ffprobe failed on {path}: {result.stderr}")
+    info = json.loads(result.stdout)
+    # r_frame_rate is a fraction like "30/1" or "30000/1001"
+    rate_str = info["streams"][0]["r_frame_rate"]
+    num, den = rate_str.split("/")
+    return float(num) / float(den)
+
+
+def _get_duration(path: Path) -> float:
+    """Get duration of a media file in seconds using ffprobe."""
     result = subprocess.run(
         [
             "ffprobe",

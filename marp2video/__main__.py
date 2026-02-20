@@ -12,7 +12,7 @@ from .assembler import assemble_video
 from .parser import parse_marp
 from .renderer import render_slides
 from .tts import generate_audio_for_slides, load_pronunciations
-from .utils import check_ffmpeg
+from .utils import check_ffmpeg, get_video_fps
 
 
 def main() -> None:
@@ -33,10 +33,13 @@ def main() -> None:
                         help="Chatterbox sampling temperature (default: 0.8)")
     parser.add_argument("--hold-duration", type=float, default=3.0,
                         help="Seconds to hold slides with no speaker notes (default: 3)")
-    parser.add_argument("--fps", type=int, default=24, help="Output framerate (default: 24)")
+    parser.add_argument("--fps", type=int, default=None,
+                        help="Output framerate (default: auto-detected from screencasts, or 24)")
     parser.add_argument("--temp-dir", help="Where to write intermediate files (default: system temp)")
     parser.add_argument("--pronunciations",
                         help="Path to a JSON file mapping words to phonetic respellings")
+    parser.add_argument("--audio-padding", type=int, default=0,
+                        help="Milliseconds of silence before and after each slide's audio (default: 0)")
     parser.add_argument("--keep-temp", action="store_true",
                         help="Don't delete intermediate files after rendering")
 
@@ -77,6 +80,31 @@ def main() -> None:
         slides = parse_marp(str(input_path))
         print(f"  Found {len(slides)} slides")
 
+        # Resolve video paths relative to the input file's directory
+        input_dir = input_path.parent
+        video_paths: list[Path | None] = []
+        for slide in slides:
+            if slide.video:
+                vp = (input_dir / slide.video).resolve()
+                if not vp.exists():
+                    print(f"Error: video file not found: {vp}", file=sys.stderr)
+                    sys.exit(1)
+                video_paths.append(vp)
+                print(f"  Slide {slide.index}: screencast → {vp.name}")
+            else:
+                video_paths.append(None)
+
+        # Determine output framerate: explicit --fps wins, otherwise use the
+        # highest framerate found among screencast videos, falling back to 24.
+        if args.fps is not None:
+            fps = args.fps
+        else:
+            screencast_fps = [
+                get_video_fps(vp) for vp in video_paths if vp is not None
+            ]
+            fps = int(max(screencast_fps)) if screencast_fps else 24
+        print(f"  Output framerate: {fps} fps")
+
         # Step 2: Render images
         print("[2/4] Rendering slide images…")
         images = render_slides(str(input_path), temp_dir, expected_count=len(slides))
@@ -102,16 +130,19 @@ def main() -> None:
             audio_files,
             output_path,
             temp_dir=temp_dir,
-            fps=args.fps,
+            fps=fps,
+            videos=video_paths,
+            audio_padding_ms=args.audio_padding,
         )
 
         # Summary
         tts_count = sum(1 for s in slides if s.notes)
         silent_count = len(slides) - tts_count
-        print(
-            f"\nDone! {len(slides)} slides processed "
-            f"({tts_count} narrated, {silent_count} silent)."
-        )
+        video_count = sum(1 for v in video_paths if v is not None)
+        parts = [f"{tts_count} narrated", f"{silent_count} silent"]
+        if video_count:
+            parts.append(f"{video_count} with screencast")
+        print(f"\nDone! {len(slides)} slides processed ({', '.join(parts)}).")
         print(f"Output: {output_path}")
 
     except Exception:

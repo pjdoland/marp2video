@@ -48,6 +48,14 @@ Each one handles a different part of the pipeline. -->
 
 ---
 
+# Live Demo
+
+<!-- video: assets/demo.mov -->
+
+<!-- Watch as we deploy the service to production. -->
+
+---
+
 # Questions?
 ```
 
@@ -68,9 +76,10 @@ python -m marp2video <input.md> [options]
 | `--cfg-weight` | `0.5` | Chatterbox classifier-free guidance weight |
 | `--temperature` | `0.8` | Chatterbox sampling temperature |
 | `--hold-duration` | `3.0` | Seconds to hold slides with no notes |
-| `--fps` | `24` | Output video framerate |
+| `--fps` | `auto` | Output framerate (auto-detected from screencasts, or 24) |
 | `--temp-dir` | system temp | Directory for intermediate files |
 | `--pronunciations` | none | JSON file mapping words to phonetic respellings |
+| `--audio-padding` | `0` | Milliseconds of silence before and after each slide's audio |
 | `--keep-temp` | off | Preserve intermediate files after rendering |
 
 ### Examples
@@ -98,6 +107,30 @@ python -m marp2video deck.md \
     --voice ~/models/my-voice.wav \
     --pronunciations pronunciations.json
 ```
+
+## Embedding Screencasts
+
+You can replace a slide's static image with a video file (e.g. a screen
+recording or demo). Add a `video` directive in an HTML comment:
+
+```markdown
+---
+
+# Live Demo
+
+<!-- video: assets/demo.mov -->
+
+<!-- Here we walk through the deployment process step by step. -->
+```
+
+The video replaces the rendered slide image for that slide. The screencast's
+original audio is stripped and replaced with the TTS narration from your speaker
+notes. If the narration is longer than the video, the last frame is frozen until
+the audio finishes. Video paths are resolved relative to the input markdown file.
+
+When screencasts are present, the output framerate is automatically set to match
+the highest framerate among the embedded videos (rather than the default 24 fps).
+You can still override this with `--fps`.
 
 ## Pronunciation Overrides
 
@@ -132,4 +165,5 @@ key like `"Visual Studio Code"` will match before `"Code"` on its own.
    split by sentence and reassembled into one WAV per slide. Slides without
    notes become silent holds.
 4. **Assemble** -- Build a video segment per slide (image looped over the
-   audio duration), then concatenate everything into the final MP4 with ffmpeg.
+   audio duration, or screencast video with TTS audio replacing the original
+   track), then concatenate everything into the final MP4 with ffmpeg.

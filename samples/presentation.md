@@ -254,6 +254,22 @@ all .ts files  ──▶  concat demuxer  ──▶  output.mp4
 
 ---
 
+## Embedded Screencasts
+
+- Any slide can include a screencast instead of a static image
+- Add `<!-- video: path/to/file.mov -->` to embed a video
+- The TTS narration from speaker notes still provides the audio
+- The screencast's own audio track is stripped
+- Duration is the longer of the narration or the video
+- If the narration runs longer, the last frame of the video freezes
+- Output framerate auto-detects from the highest screencast framerate
+
+<!-- video: assets/screencast-test.mov -->
+
+<!-- Not every slide is a static image. If you need to show a screen recording, a terminal session, or a product demo, you can embed a video file directly into a slide. Just add a video directive as an HTML comment with the path to the file. The tool strips the screencast's audio and replaces it with the TTS narration from your speaker notes, same as any other slide. If your narration runs longer than the video, the last frame freezes until the audio finishes. The output framerate automatically matches the highest framerate among your screencasts, so a sixty frames per second recording stays smooth. You can override this with the fps flag if you want. -->
+
+---
+
 ## When Things Go Wrong
 
 - All intermediate files land in a single temp directory

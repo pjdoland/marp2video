@@ -23,6 +23,7 @@ python -m marp2video presentation.md \
     --cfg-weight 0.3 \
     --temperature 0.6 \
     --pronunciations pronunciations.json \
+    --audio-padding 300 \
     --output output.mp4
 ```
 
@@ -65,4 +66,15 @@ Python 3.11, Node.js/npm (for marp-cli via npx), ffmpeg/ffprobe. The `setup.sh` 
 
 ## Tests
 
-No test infrastructure exists yet.
+```bash
+# Run all tests
+python -m pytest
+
+# Run a specific test file
+python -m pytest tests/test_parser.py
+
+# Run with verbose output (default via pyproject.toml)
+python -m pytest -v
+```
+
+Tests use pytest and live in `tests/`. All external dependencies (ffmpeg, marp-cli, torch, chatterbox) are mocked — tests run fast with no system requirements beyond Python. Test modules mirror the source modules: `test_parser.py`, `test_utils.py`, `test_renderer.py`, `test_tts.py`, `test_assembler.py`, `test_main.py`.
