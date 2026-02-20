@@ -231,7 +231,7 @@ sentence_groups = [" ".join(sentences[i:i+3])
                    for i in range(0, len(sentences), 3)]
 ```
 
-<!-- This is the slow part. Chatterbox is a neural TTS model that runs on your local GPU or CPU. You give it a WAV sample of your voice and it clones you. Each chunk comes back as a tensor. We concatenate them with torch dot cat, one WAV per slide. Slides with no speaker notes get a silent WAV: just a RIFF header and zeroed samples. Oh, and if it mispronounces something, you can add a pronunciation override file. It's just a JSON file that maps words to phonetic respellings. Case-insensitive, longest match first. -->
+<!-- This is the slow part. Chatterbox is a neural TTS model that runs on your local GPU or CPU. You give it a WAV sample of your voice and it clones you. Each chunk comes back as a tensor. We concatenate them with torch dot cat, one WAV per slide. Slides with no speaker notes get a silent WAV: just a RIFF header and zeroed samples. Oh, and if it mispronounces something, you can add a pronunciation override file. It's just a JSON file that maps words to phonetic spellings. -->
 
 ---
 
@@ -250,7 +250,7 @@ slide.png + audio.wav  ──▶  segment_002.ts
 all .ts files  ──▶  concat demuxer  ──▶  output.mp4
 ```
 
-<!-- Last stage. Each slide becomes an MPEG transport stream segment. The PNG loops as video frames for the duration of that slide's audio. We use x264 with the stillimage tuning flag, so the encoder figures out that every frame is identical and the bitrate drops to almost nothing. Images get scaled and padded to nineteen twenty by ten eighty. Audio is encoded as 192 kbps AAC. Then ffmpeg's concat demuxer joins all the segments. That last step is a stream copy, no re-encoding. Takes a couple of seconds. -->
+<!-- Last stage. Each slide becomes an MPEG transport stream segment. The PNG loops as video frames for the duration of that slide's audio. We use x264 with the stillimage tuning flag, so the encoder figures out that every frame is identical and the bitrate drops to almost nothing. Images get scaled and padded to nineteen twenty by ten eighty. Audio is encoded as 192 kilobits per second AAC. Then ffmpeg's concat demuxer joins all the segments. That last step is a stream copy, no re-encoding. Takes a couple of seconds. -->
 
 ---
 
@@ -261,7 +261,7 @@ all .ts files  ──▶  concat demuxer  ──▶  output.mp4
 - On success, it is cleaned up (or kept with `--keep-temp`)
 - Files are zero-padded: `audio_001.wav`, `segment_001.ts` — easy to correlate
 
-<!-- Everything goes into one temp directory. PNGs, WAVs, transport stream segments, all of it. If a stage fails, that directory sticks around so you can see where things stopped. On success it gets cleaned up, unless you pass keep-temp. I use keep-temp a lot because I like to listen to individual slide audio before watching the whole video. -->
+<!-- Everything goes into one temp directory. PNGs, WAVs, transport stream segments, all of it. If a stage fails, that directory sticks around so you can see where things stopped. On success it gets cleaned up, unless you pass keep-temp. -->
 
 ---
 
@@ -277,7 +277,7 @@ python -m marp2video deck.md --voice my-voice.wav
 - Tune with `--exaggeration`, `--cfg-weight`, `--temperature`
 - Fix mispronunciations with `--pronunciations overrides.json`
 
-<!-- For the voice sample, you can just record five to ten minutes of yourself reading varied content. Different emotions, different pacing. I actually booked an hour at a recording studio to do this so I'd get the best quality sample possible. Then point it at your slide deck, pass in your voice file, and a couple of minutes later you get an MP4. There are flags to tune expressiveness and cloning fidelity. I'll be using this for demos and training videos, but with a for-loop and a folder of Markdown files you could easily use this to build a YouTube empire of ten thousand AI-narrated brainrot videos. I'm not going to do that. Probably. -->
+<!-- For the voice sample, you can just record five to ten minutes of yourself reading varied content. Different emotions, different pacing. I actually booked an hour at a recording studio to do this so I'd get the best quality sample possible. Then point it at your slide deck, pass in your voice file, and a couple of minutes later you get an MP4. There are flags to tune expressiveness and cloning fidelity. I'll be using this for demos and training videos, but with a for-loop and a folder of Markdown files you could easily use this to build a YouTube empire of ten thousand AI-narrated brainrot videos. I'm not going to do that... Probably. -->
 
 ---
 
@@ -287,7 +287,7 @@ This entire presentation was generated using *marp2video*.
 
 No microphone. No recording session. Just a Markdown file.
 
-<!-- So, full disclosure. This presentation was generated with marp2video. You can probably tell. The cadence is a little off, some words land weird. But it still sounds better than what I would have actually recorded, which would be full of ums and ahs, pops, and breath sounds. The whole thing is a single Markdown file. If I needed to fix something, I'd edit the text and regenerate. The real me is probably getting coffee right now. -->
+<!-- So, full disclosure. This presentation was generated with marp2video. You can almost certainly tell. The cadence is a little off, some words land weird. But it still sounds better than what I would have actually recorded, which would be full of ums and ahs, pops, and breath sounds. The whole thing is a single Markdown file. If I needed to fix something, I'd edit the text and regenerate. The real me is probably getting coffee right now. -->
 
 ---
 

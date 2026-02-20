@@ -3,5 +3,6 @@ __pycache__/
 *.pyc
 .DS_Store
 *.mp4
+!samples/presentation.mp4
 *.wav
 *.ts
