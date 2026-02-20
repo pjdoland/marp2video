@@ -22,8 +22,23 @@ python -m marp2video presentation.md \
     --exaggeration 0.5 \
     --cfg-weight 0.3 \
     --temperature 0.6 \
+    --pronunciations pronunciations.json \
     --output output.mp4
 ```
+
+### Pronunciation Overrides
+
+Create a JSON file mapping words or phrases to phonetic respellings that the TTS engine will pronounce correctly:
+
+```json
+{
+  "kubectl": "cube control",
+  "nginx": "engine X",
+  "PostgreSQL": "post gress Q L"
+}
+```
+
+Pass it with `--pronunciations pronunciations.json`. Matching is case-insensitive; longer phrases are matched first so multi-word keys take priority over single-word ones.
 
 ## Architecture
 
@@ -31,7 +46,7 @@ The pipeline is orchestrated by `__main__.py` and flows through four modules in 
 
 1. **parser.py** -- Splits markdown on `---` delimiters, extracts speaker notes from `<!-- -->` HTML comments into `Slide` dataclasses (index, body, notes).
 2. **renderer.py** -- Calls marp-cli (via npx or global install) to produce one PNG per slide. Output files are named `slides.001`, `slides.002`, etc. (no file extension).
-3. **tts.py** -- Synthesizes each slide's notes with Chatterbox TTS. Long notes are split by sentence and each sentence is generated separately, then concatenated with `torch.cat` into one WAV per slide. Slides without notes get a silent WAV.
+3. **tts.py** -- Synthesizes each slide's notes with Chatterbox TTS. Long notes are split by sentence and each sentence is generated separately, then concatenated with `torch.cat` into one WAV per slide. Slides without notes get a silent WAV. An optional pronunciation mapping (JSON) applies case-insensitive text substitutions before synthesis to correct mispronounced terms.
 4. **assembler.py** -- Creates per-slide MPEG-TS segments (image looped for audio duration) then concatenates into the final MP4 using ffmpeg's concat demuxer.
 
 **utils.py** provides shared helpers: ffmpeg/ffprobe checks, silent WAV generation, and audio duration queries.

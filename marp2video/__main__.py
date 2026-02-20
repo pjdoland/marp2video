@@ -11,7 +11,7 @@ from pathlib import Path
 from .assembler import assemble_video
 from .parser import parse_marp
 from .renderer import render_slides
-from .tts import generate_audio_for_slides
+from .tts import generate_audio_for_slides, load_pronunciations
 from .utils import check_ffmpeg
 
 
@@ -35,6 +35,8 @@ def main() -> None:
                         help="Seconds to hold slides with no speaker notes (default: 3)")
     parser.add_argument("--fps", type=int, default=24, help="Output framerate (default: 24)")
     parser.add_argument("--temp-dir", help="Where to write intermediate files (default: system temp)")
+    parser.add_argument("--pronunciations",
+                        help="Path to a JSON file mapping words to phonetic respellings")
     parser.add_argument("--keep-temp", action="store_true",
                         help="Don't delete intermediate files after rendering")
 
@@ -46,6 +48,16 @@ def main() -> None:
         sys.exit(1)
 
     output_path = Path(args.output) if args.output else input_path.with_suffix(".mp4")
+
+    # Load pronunciation overrides
+    pronunciations = None
+    if args.pronunciations:
+        pron_path = Path(args.pronunciations)
+        if not pron_path.exists():
+            print(f"Error: pronunciations file {pron_path} not found.", file=sys.stderr)
+            sys.exit(1)
+        pronunciations = load_pronunciations(pron_path)
+        print(f"Loaded {len(pronunciations)} pronunciation override(s)")
 
     # Pre-flight checks
     check_ffmpeg()
@@ -80,6 +92,7 @@ def main() -> None:
             cfg_weight=args.cfg_weight,
             temperature=args.temperature,
             hold_duration=args.hold_duration,
+            pronunciations=pronunciations,
         )
 
         # Step 4: Assemble video
