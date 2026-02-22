@@ -1,8 +1,9 @@
 # marp2video
 
-Turn a [Marp](https://marp.app/) slide deck into a narrated video. Write your
-slides in Markdown, add speaker notes as HTML comments, and marp2video handles
-the rest: rendering, text-to-speech with voice cloning, and final MP4 assembly.
+Turn a [Marp](https://marp.app/) or [Slidev](https://sli.dev/) slide deck into a
+narrated video. Write your slides in Markdown, add speaker notes as HTML
+comments, and marp2video handles the rest: rendering, text-to-speech with voice
+cloning, and final MP4 assembly. The presentation format is auto-detected.
 
 ## Quick Start
 
@@ -14,11 +15,29 @@ python -m marp2video presentation.md --voice voice-sample.wav
 The setup script checks for system dependencies, creates a Python 3.11 virtual
 environment, installs packages, and activates the venv in your shell.
 
+## Documentation
+
+Detailed guides covering every feature and workflow:
+
+- [Getting started](docs/getting-started.md) -- installation, setup, first run
+- [Writing slides](docs/writing-slides.md) -- slide authoring for Marp and Slidev
+- [Format detection](docs/format-detection.md) -- how auto-detection works, when to override
+- [Voice and TTS](docs/voice-and-tts.md) -- voice cloning, tuning, pronunciation overrides
+- [Video assembly](docs/video-assembly.md) -- screencasts, framerate, padding, output format
+- [CLI reference](docs/cli-reference.md) -- flag-by-flag reference
+- [Interactive mode](docs/interactive-mode.md) -- review workflow for TTS audio
+- [Troubleshooting](docs/troubleshooting.md) -- common problems and debugging
+- [Examples](docs/examples.md) -- worked examples and recipes
+
 ## Requirements
 
 - **Python 3.11**
 - **Node.js / npm** (for marp-cli via npx)
 - **ffmpeg**
+
+For Slidev presentations (optional):
+- **@slidev/cli** (`npm install -g @slidev/cli`)
+- **playwright-chromium** (`npx playwright install chromium`)
 
 On macOS:
 
@@ -29,6 +48,10 @@ brew install python@3.11 node ffmpeg
 ## Writing Slides
 
 Speaker notes go in HTML comments. Slides without notes get a silent hold.
+Both Marp and Slidev formats are supported — the format is auto-detected from
+frontmatter and content, or you can specify it explicitly with `--format`.
+
+### Marp Example
 
 ```markdown
 ---
@@ -59,6 +82,30 @@ Each one handles a different part of the pipeline. -->
 # Questions?
 ```
 
+### Slidev Example
+
+```markdown
+---
+transition: slide-left
+---
+
+# Welcome
+
+<!-- This is the opening slide. The audience will hear this narration. -->
+
+---
+layout: center
+---
+
+# Architecture
+
+<!-- Our system has three main components. -->
+
+---
+
+# Questions?
+```
+
 ## Usage
 
 ```bash
@@ -69,6 +116,7 @@ python -m marp2video <input.md> [options]
 
 | Flag | Default | Description |
 |------|---------|-------------|
+| `--format` | `auto` | Presentation format: `auto`, `marp`, or `slidev` |
 | `--output` | `<input>.mp4` | Output file path |
 | `--voice` | none | Reference WAV for voice cloning |
 | `--device` | `auto` | Torch device: `auto`, `cpu`, `cuda`, `mps` |
@@ -107,6 +155,9 @@ python -m marp2video deck.md \
 python -m marp2video deck.md \
     --voice ~/models/my-voice.wav \
     --pronunciations pronunciations.json
+
+# Explicit Slidev format
+python -m marp2video slidev-deck.md --format slidev --voice voice.wav
 ```
 
 ## Interactive Mode
@@ -177,9 +228,11 @@ key like `"Visual Studio Code"` will match before `"Code"` on its own.
 
 ## How It Works
 
+0. **Detect** -- Auto-detect the presentation format (Marp or Slidev) from
+   frontmatter and content markers. Skipped when `--format` is explicit.
 1. **Parse** -- Split the Markdown on `---` delimiters, extract speaker notes
    from `<!-- -->` comments.
-2. **Render** -- Call marp-cli to produce a PNG image per slide.
+2. **Render** -- Call marp-cli (or Slidev CLI) to produce a PNG image per slide.
 3. **TTS** -- Synthesize each slide's notes with Chatterbox. Long notes are
    split by sentence and reassembled into one WAV per slide. Slides without
    notes become silent holds.

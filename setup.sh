@@ -46,6 +46,15 @@ else
     fail "Neither marp nor npx found. Install Node.js or run: npm install -g @marp-team/marp-cli"
 fi
 
+# Slidev support (optional — only needed for Slidev presentations)
+if check_cmd slidev; then
+    info "slidev (global)"
+elif check_cmd npx; then
+    info "npx available (can use npx @slidev/cli for Slidev decks)"
+else
+    warn "Slidev CLI not found. Install with: npm install -g @slidev/cli (only needed for Slidev decks)"
+fi
+
 # ── Virtual environment ─────────────────────────────────────────────────────
 
 echo ""

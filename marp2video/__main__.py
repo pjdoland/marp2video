@@ -1,4 +1,4 @@
-"""marp2video — Convert a Marp markdown presentation into a narrated MP4 video."""
+"""marp2video — Convert a Marp or Slidev markdown presentation into a narrated MP4 video."""
 
 from __future__ import annotations
 
@@ -11,8 +11,11 @@ import time
 from pathlib import Path
 
 from .assembler import assemble_video
+from .detect import detect_format
 from .parser import parse_marp
 from .renderer import render_slides
+from .slidev_parser import parse_slidev
+from .slidev_renderer import render_slidev_slides
 from .tts import generate_audio_for_slides, load_pronunciations
 from .utils import check_ffmpeg, get_video_fps
 
@@ -22,9 +25,9 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="marp2video",
-        description="Convert a Marp markdown presentation into a narrated MP4 video.",
+        description="Convert a Marp or Slidev markdown presentation into a narrated MP4 video.",
     )
-    parser.add_argument("input", help="Path to the Marp .md file")
+    parser.add_argument("input", help="Path to the Marp or Slidev .md file")
     parser.add_argument("--output", help="Output MP4 path (default: <input>.mp4)")
     parser.add_argument("--voice", help="Path to a reference WAV for Chatterbox voice cloning")
     parser.add_argument("--device", default="auto",
@@ -46,6 +49,8 @@ def main() -> None:
                         help="Milliseconds of silence before and after each slide's audio (default: 0)")
     parser.add_argument("--keep-temp", action="store_true",
                         help="Don't delete intermediate files after rendering")
+    parser.add_argument("--format", choices=["auto", "marp", "slidev"], default="auto",
+                        help="Presentation format: auto, marp, or slidev (default: auto)")
     parser.add_argument("--interactive", "-i", action="store_true",
                         help="Review and approve each slide's TTS audio before continuing")
 
@@ -92,10 +97,19 @@ def main() -> None:
     logger.info("Input: %s, Output: %s, Temp dir: %s", input_path, output_path, temp_dir)
 
     try:
+        # Detect format
+        fmt = args.format
+        if fmt == "auto":
+            fmt = detect_format(str(input_path))
+        print(f"  Format: {fmt}")
+
         # Step 1: Parse
         print("[1/4] Parsing slides…")
         t0 = time.monotonic()
-        slides = parse_marp(str(input_path))
+        if fmt == "slidev":
+            slides = parse_slidev(str(input_path))
+        else:
+            slides = parse_marp(str(input_path))
         logger.info("[1/4] Parse completed in %.2fs — %d slides", time.monotonic() - t0, len(slides))
         print(f"  Found {len(slides)} slides")
 
@@ -127,7 +141,10 @@ def main() -> None:
         # Step 2: Render images
         print("[2/4] Rendering slide images…")
         t0 = time.monotonic()
-        images = render_slides(str(input_path), temp_dir, expected_count=len(slides))
+        if fmt == "slidev":
+            images = render_slidev_slides(str(input_path), temp_dir, expected_count=len(slides))
+        else:
+            images = render_slides(str(input_path), temp_dir, expected_count=len(slides))
         logger.info("[2/4] Render completed in %.2fs", time.monotonic() - t0)
 
         # Step 3: Generate audio

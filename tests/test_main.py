@@ -20,12 +20,20 @@ def _patch_pipeline(**overrides):
     """Return a dict of patches for all pipeline steps with sensible defaults."""
     defaults = {
         "marp2video.__main__.check_ffmpeg": MagicMock(),
+        "marp2video.__main__.detect_format": MagicMock(return_value="marp"),
         "marp2video.__main__.parse_marp": MagicMock(return_value=[
+            Slide(index=1, body="body", notes="Hello.", video=None),
+            Slide(index=2, body="body", notes=None, video=None),
+        ]),
+        "marp2video.__main__.parse_slidev": MagicMock(return_value=[
             Slide(index=1, body="body", notes="Hello.", video=None),
             Slide(index=2, body="body", notes=None, video=None),
         ]),
         "marp2video.__main__.render_slides": MagicMock(return_value=[
             Path("/tmp/slides.001"), Path("/tmp/slides.002"),
+        ]),
+        "marp2video.__main__.render_slidev_slides": MagicMock(return_value=[
+            Path("/tmp/slides.001.png"), Path("/tmp/slides.002.png"),
         ]),
         "marp2video.__main__.generate_audio_for_slides": MagicMock(return_value=[
             Path("/tmp/audio_001.wav"), Path("/tmp/audio_002.wav"),
@@ -316,3 +324,78 @@ class TestTempDirectory:
                 main()
 
         assert custom_temp.exists()
+
+
+# ---------------------------------------------------------------------------
+# Format detection and routing
+# ---------------------------------------------------------------------------
+
+class TestFormatRouting:
+    def _run_main(self, argv, patches):
+        import contextlib
+        from marp2video.__main__ import main
+
+        with patch("sys.argv", argv):
+            with contextlib.ExitStack() as stack:
+                mocks = {}
+                for target, mock_obj in patches.items():
+                    mocks[target] = stack.enter_context(patch(target, mock_obj))
+                main()
+                return mocks
+
+    def test_auto_format_calls_detect(self, tmp_path):
+        md = tmp_path / "deck.md"
+        md.write_text("---\nmarp: true\n---\n\n# Slide\n")
+
+        patches = _patch_pipeline()
+        mocks = self._run_main(["marp2video", str(md)], patches)
+        mocks["marp2video.__main__.detect_format"].assert_called_once()
+
+    def test_explicit_marp_skips_detect(self, tmp_path):
+        md = tmp_path / "deck.md"
+        md.write_text("---\nmarp: true\n---\n\n# Slide\n")
+
+        patches = _patch_pipeline()
+        mocks = self._run_main(["marp2video", str(md), "--format", "marp"], patches)
+        mocks["marp2video.__main__.detect_format"].assert_not_called()
+
+    def test_explicit_slidev_skips_detect(self, tmp_path):
+        md = tmp_path / "deck.md"
+        md.write_text("---\ntransition: fade\n---\n\n# Slide\n")
+
+        patches = _patch_pipeline()
+        mocks = self._run_main(["marp2video", str(md), "--format", "slidev"], patches)
+        mocks["marp2video.__main__.detect_format"].assert_not_called()
+
+    def test_marp_format_uses_marp_pipeline(self, tmp_path):
+        md = tmp_path / "deck.md"
+        md.write_text("---\nmarp: true\n---\n\n# Slide\n")
+
+        patches = _patch_pipeline()
+        mocks = self._run_main(["marp2video", str(md), "--format", "marp"], patches)
+        mocks["marp2video.__main__.parse_marp"].assert_called_once()
+        mocks["marp2video.__main__.render_slides"].assert_called_once()
+        mocks["marp2video.__main__.parse_slidev"].assert_not_called()
+        mocks["marp2video.__main__.render_slidev_slides"].assert_not_called()
+
+    def test_slidev_format_uses_slidev_pipeline(self, tmp_path):
+        md = tmp_path / "deck.md"
+        md.write_text("---\ntransition: fade\n---\n\n# Slide\n")
+
+        patches = _patch_pipeline()
+        mocks = self._run_main(["marp2video", str(md), "--format", "slidev"], patches)
+        mocks["marp2video.__main__.parse_slidev"].assert_called_once()
+        mocks["marp2video.__main__.render_slidev_slides"].assert_called_once()
+        mocks["marp2video.__main__.parse_marp"].assert_not_called()
+        mocks["marp2video.__main__.render_slides"].assert_not_called()
+
+    def test_auto_detected_slidev_uses_slidev_pipeline(self, tmp_path):
+        md = tmp_path / "deck.md"
+        md.write_text("---\ntransition: fade\n---\n\n# Slide\n")
+
+        patches = _patch_pipeline(**{
+            "marp2video.__main__.detect_format": MagicMock(return_value="slidev"),
+        })
+        mocks = self._run_main(["marp2video", str(md)], patches)
+        mocks["marp2video.__main__.parse_slidev"].assert_called_once()
+        mocks["marp2video.__main__.render_slidev_slides"].assert_called_once()

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Project Does
 
-marp2video converts Marp markdown slide decks into narrated MP4 videos. It runs a 4-step pipeline: parse markdown into slides, render PNGs via marp-cli, synthesize speech from speaker notes using Chatterbox TTS, and assemble everything into a video with ffmpeg.
+marp2video converts Marp and Slidev markdown slide decks into narrated MP4 videos. It runs a 4-step pipeline: parse markdown into slides, render PNGs via marp-cli (or Slidev CLI), synthesize speech from speaker notes using Chatterbox TTS, and assemble everything into a video with ffmpeg. The presentation format is auto-detected but can be overridden with `--format marp|slidev`.
 
 ## Running the Tool
 
@@ -12,8 +12,11 @@ marp2video converts Marp markdown slide decks into narrated MP4 videos. It runs 
 # First-time setup (must be sourced, not executed)
 source setup.sh
 
-# Basic usage
+# Basic usage (auto-detects Marp or Slidev)
 python -m marp2video presentation.md --voice path/to/voice.wav
+
+# Explicit format override
+python -m marp2video presentation.md --format slidev --voice voice.wav
 
 # With all TTS options
 python -m marp2video presentation.md \
@@ -45,8 +48,9 @@ Pass it with `--pronunciations pronunciations.json`. Matching is case-insensitiv
 
 The pipeline is orchestrated by `__main__.py` and flows through four modules in sequence:
 
-1. **parser.py** -- Splits markdown on `---` delimiters, extracts speaker notes from `<!-- -->` HTML comments into `Slide` dataclasses (index, body, notes).
-2. **renderer.py** -- Calls marp-cli (via npx or global install) to produce one PNG per slide. Output files are named `slides.001`, `slides.002`, etc. (no file extension).
+0. **detect.py** -- Auto-detects format (`"marp"` or `"slidev"`) by checking YAML frontmatter keys, directive comments, and Vue component syntax. Falls back to Marp. Skipped when `--format` is explicit.
+1. **parser.py** / **slidev_parser.py** -- Splits markdown on `---` delimiters, extracts speaker notes from `<!-- -->` HTML comments into `Slide` dataclasses (index, body, notes). The Slidev parser additionally strips per-slide frontmatter and does not filter Marp-style directive comments.
+2. **renderer.py** / **slidev_renderer.py** -- Calls marp-cli or Slidev CLI (via npx or global install) to produce one PNG per slide. Marp output: `slides.001`, `slides.002`, etc. (no extension). Slidev output: `slides.001.png`, `slides.002.png`, etc.
 3. **tts.py** -- Synthesizes each slide's notes with Chatterbox TTS. Long notes are split by sentence and each sentence is generated separately, then concatenated with `torch.cat` into one WAV per slide. Slides without notes get a silent WAV. An optional pronunciation mapping (JSON) applies case-insensitive text substitutions before synthesis to correct mispronounced terms.
 4. **assembler.py** -- Creates per-slide MPEG-TS segments (image looped for audio duration) then concatenates into the final MP4 using ffmpeg's concat demuxer.
 
@@ -62,7 +66,7 @@ The pipeline is orchestrated by `__main__.py` and flows through four modules in 
 
 ## System Dependencies
 
-Python 3.11, Node.js/npm (for marp-cli via npx), ffmpeg/ffprobe. The `setup.sh` script validates all of these, creates the venv, and installs Python packages.
+Python 3.11, Node.js/npm (for marp-cli via npx), ffmpeg/ffprobe. The `setup.sh` script validates all of these, creates the venv, and installs Python packages. For Slidev support: `npm install -g @slidev/cli` and playwright-chromium (installed via `npx playwright install chromium`).
 
 ## Tests
 
@@ -77,4 +81,4 @@ python -m pytest tests/test_parser.py
 python -m pytest -v
 ```
 
-Tests use pytest and live in `tests/`. All external dependencies (ffmpeg, marp-cli, torch, chatterbox) are mocked — tests run fast with no system requirements beyond Python. Test modules mirror the source modules: `test_parser.py`, `test_utils.py`, `test_renderer.py`, `test_tts.py`, `test_assembler.py`, `test_main.py`.
+Tests use pytest and live in `tests/`. All external dependencies (ffmpeg, marp-cli, slidev, torch, chatterbox) are mocked — tests run fast with no system requirements beyond Python. Test modules mirror the source modules: `test_parser.py`, `test_slidev_parser.py`, `test_utils.py`, `test_renderer.py`, `test_slidev_renderer.py`, `test_tts.py`, `test_assembler.py`, `test_detect.py`, `test_main.py`.

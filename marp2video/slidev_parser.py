@@ -1,4 +1,4 @@
-"""Marp markdown parser — splits slides and extracts speaker notes."""
+"""Slidev markdown parser — splits slides and extracts speaker notes."""
 
 from __future__ import annotations
 
@@ -9,23 +9,21 @@ from .models import COMMENT_RE, VIDEO_RE, Slide
 
 logger = logging.getLogger(__name__)
 
-# Marp directive comments start with an underscore or a known directive keyword.
-# These should not be treated as speaker notes.
-_DIRECTIVE_RE = re.compile(
-    r"^\s*_?\s*(class|paginate|header|footer|backgroundColor|backgroundImage|"
-    r"backgroundPosition|backgroundRepeat|backgroundSize|color|theme|math|marp|"
-    r"size|style|headingDivider|lang|title|description|author|image|keywords|url)\b",
-    re.IGNORECASE,
+# Slidev per-slide frontmatter: a YAML block at the very start of a slide
+# (between --- lines, but we've already split on --- so it appears at the
+# top of the slide text as key: value lines before any markdown content).
+_SLIDE_FRONTMATTER_RE = re.compile(
+    r"\A(\s*\w[\w-]*\s*:.*\n)*", re.MULTILINE
 )
 
 
-def parse_marp(path: str) -> list[Slide]:
-    """Parse a Marp markdown file into a list of Slide objects.
+def parse_slidev(path: str) -> list[Slide]:
+    """Parse a Slidev markdown file into a list of Slide objects.
 
-    The file is split on ``---`` delimiters (horizontal rules that Marp uses
-    as slide separators).  The first ``---`` block is treated as YAML front
-    matter and is skipped.  For every remaining block we extract HTML comments
-    as speaker notes and treat everything else as the slide body.
+    The file is split on ``---`` delimiters.  The first ``---`` block is
+    treated as YAML front matter and is skipped.  Per-slide frontmatter
+    (key: value lines at the start of each slide) is stripped from the body.
+    HTML comments are extracted as speaker notes, except for video directives.
     """
     with open(path, encoding="utf-8") as f:
         raw = f.read()
@@ -36,10 +34,10 @@ def parse_marp(path: str) -> list[Slide]:
     # The first part is the YAML front-matter block — skip it.
     if len(parts) < 2:
         raise ValueError(
-            "No slide separators (---) found. Is this a valid Marp deck?"
+            "No slide separators (---) found. Is this a valid Slidev deck?"
         )
 
-    slide_parts = parts[1:]  # everything after front matter
+    slide_parts = parts[1:]
     slides: list[Slide] = []
     logger.debug("Parsing %s: found %d slide block(s)", path, len(slide_parts))
 
@@ -50,10 +48,7 @@ def parse_marp(path: str) -> list[Slide]:
         def _collect(m: re.Match) -> str:
             nonlocal video_path
             content = m.group(1).strip()
-            # Skip Marp directive comments (e.g. <!-- _class: lead -->)
-            if _DIRECTIVE_RE.match(content):
-                return ""
-            # Extract video directive (e.g. <!-- video: demo.mov -->)
+            # Extract video directive
             video_match = VIDEO_RE.match(content)
             if video_match:
                 video_path = video_match.group(1)
@@ -61,7 +56,12 @@ def parse_marp(path: str) -> list[Slide]:
             notes_fragments.append(content)
             return ""
 
-        body = COMMENT_RE.sub(_collect, part).strip()
+        # Remove HTML comments (collecting notes and video directives)
+        body = COMMENT_RE.sub(_collect, part)
+
+        # Strip per-slide frontmatter from the body
+        body = _SLIDE_FRONTMATTER_RE.sub("", body).strip()
+
         notes = "\n".join(notes_fragments) if notes_fragments else None
 
         slides.append(Slide(index=i + 1, body=body, notes=notes, video=video_path))
