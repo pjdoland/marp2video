@@ -46,13 +46,20 @@ else
     fail "Neither marp nor npx found. Install Node.js or run: npm install -g @marp-team/marp-cli"
 fi
 
-# Slidev support (optional — only needed for Slidev presentations)
+# ── Slidev support (optional) ──────────────────────────────────────────────
+
+INSTALL_SLIDEV=false
 if check_cmd slidev; then
     info "slidev (global)"
-elif check_cmd npx; then
-    info "npx available (can use npx @slidev/cli for Slidev decks)"
 else
-    warn "Slidev CLI not found. Install with: npm install -g @slidev/cli (only needed for Slidev decks)"
+    echo ""
+    printf "  Install Slidev support? (only needed for Slidev presentations) [y/N] "
+    read -r answer
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        INSTALL_SLIDEV=true
+    else
+        info "Skipping Slidev (you can install later with: npm install -g @slidev/cli)"
+    fi
 fi
 
 # ── Virtual environment ─────────────────────────────────────────────────────
@@ -82,6 +89,19 @@ echo "Installing Python dependencies (this may take a while on first run)…"
 "$PIP" install --upgrade pip --quiet
 "$PIP" install -r requirements.txt --quiet
 info "All packages installed"
+
+# ── Slidev installation ───────────────────────────────────────────────────────
+
+if $INSTALL_SLIDEV; then
+    echo ""
+    echo "Installing Slidev CLI…"
+    npm install -g @slidev/cli
+    info "@slidev/cli installed"
+
+    echo "Installing Playwright Chromium (used by Slidev for PNG export)…"
+    npx playwright install chromium
+    info "playwright-chromium installed"
+fi
 
 # ── Activate ─────────────────────────────────────────────────────────────────
 

@@ -36,7 +36,7 @@ npx playwright install chromium
 
 ## Running setup.sh
 
-`setup.sh` checks for system dependencies, creates a Python 3.11 virtual environment, installs packages, and activates the venv in your current shell.
+`setup.sh` checks for system dependencies, creates a Python 3.11 virtual environment, installs packages, and activates the venv in your current shell. It also asks whether you want to install Slidev support (the Slidev CLI and Playwright Chromium).
 
 You must source the script, not execute it:
 
@@ -54,10 +54,11 @@ Why? The script activates a virtual environment as its final step. A child proce
 What the script does:
 
 1. Checks that `python3.11`, `ffmpeg`, `ffprobe`, and `npx` (or `marp`) are on PATH.
-2. Optionally checks for `slidev` (warns if missing, doesn't fail).
+2. Asks if you want Slidev support (skipped if `slidev` is already installed).
 3. Creates `.venv/` if it doesn't exist (or recreates it if the existing one is broken).
 4. Installs/upgrades pip and all packages from `requirements.txt`.
-5. Activates the virtual environment.
+5. If you said yes to Slidev: installs `@slidev/cli` globally and Playwright Chromium.
+6. Activates the virtual environment.
 
 After setup completes, you can run marp2video directly:
 
