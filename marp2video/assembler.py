@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import subprocess
 import sys
 from pathlib import Path
 
 from .utils import get_audio_duration, get_video_duration
+
+logger = logging.getLogger(__name__)
 
 
 _SCALE_PAD_FILTER = "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2"
@@ -55,7 +58,10 @@ def _make_segment(
         "-f", "mpegts",
         str(segment),
     ]
+    logger.debug("Segment %d command: %s", index, " ".join(cmd))
     result = subprocess.run(cmd, capture_output=True, text=True)
+    logger.debug("Segment %d stdout: %s", index, result.stdout)
+    logger.debug("Segment %d stderr: %s", index, result.stderr)
     if result.returncode != 0:
         print(f"ffmpeg segment error (slide {index}):", result.stderr, file=sys.stderr)
         raise RuntimeError(f"ffmpeg failed on segment {index}")
@@ -113,7 +119,10 @@ def _make_video_segment(
         "-f", "mpegts",
         str(segment),
     ]
+    logger.debug("Video segment %d command: %s", index, " ".join(cmd))
     result = subprocess.run(cmd, capture_output=True, text=True)
+    logger.debug("Video segment %d stdout: %s", index, result.stdout)
+    logger.debug("Video segment %d stderr: %s", index, result.stderr)
     if result.returncode != 0:
         print(f"ffmpeg video-segment error (slide {index}):", result.stderr, file=sys.stderr)
         raise RuntimeError(f"ffmpeg failed on video segment {index}")
@@ -149,6 +158,7 @@ def assemble_video(
     with open(concat_file, "w") as f:
         for seg in segments:
             f.write(f"file '{seg}'\n")
+    logger.debug("Concat file contents:\n%s", "\n".join(f"file '{seg}'" for seg in segments))
 
     cmd = [
         "ffmpeg", "-y",
@@ -158,10 +168,15 @@ def assemble_video(
         "-c", "copy",
         str(output),
     ]
+    logger.debug("Concat command: %s", " ".join(cmd))
     print(f"  Concatenating {len(segments)} segments…")
     result = subprocess.run(cmd, capture_output=True, text=True)
+    logger.debug("Concat stdout: %s", result.stdout)
+    logger.debug("Concat stderr: %s", result.stderr)
     if result.returncode != 0:
         print("ffmpeg concat error:", result.stderr, file=sys.stderr)
         raise RuntimeError("ffmpeg concat failed")
 
-    print(f"  Output: {output} ({output.stat().st_size / 1024 / 1024:.1f} MB)")
+    file_size = output.stat().st_size
+    logger.info("Output file: %s (%d bytes, %.1f MB)", output, file_size, file_size / 1024 / 1024)
+    print(f"  Output: {output} ({file_size / 1024 / 1024:.1f} MB)")

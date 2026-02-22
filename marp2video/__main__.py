@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import shutil
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 from .assembler import assemble_video
@@ -13,6 +15,8 @@ from .parser import parse_marp
 from .renderer import render_slides
 from .tts import generate_audio_for_slides, load_pronunciations
 from .utils import check_ffmpeg, get_video_fps
+
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
@@ -76,10 +80,23 @@ def main() -> None:
         temp_dir = Path(tempfile.mkdtemp(prefix="marp2video_"))
         user_temp = False
 
+    # Configure logging to file in the temp directory
+    log_path = temp_dir / "marp2video.log"
+    file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+    logging.getLogger("marp2video").setLevel(logging.DEBUG)
+    logging.getLogger("marp2video").addHandler(file_handler)
+
+    logger.info("CLI arguments: %s", vars(args))
+    logger.info("Input: %s, Output: %s, Temp dir: %s", input_path, output_path, temp_dir)
+
     try:
         # Step 1: Parse
         print("[1/4] Parsing slides…")
+        t0 = time.monotonic()
         slides = parse_marp(str(input_path))
+        logger.info("[1/4] Parse completed in %.2fs — %d slides", time.monotonic() - t0, len(slides))
         print(f"  Found {len(slides)} slides")
 
         # Resolve video paths relative to the input file's directory
@@ -109,10 +126,13 @@ def main() -> None:
 
         # Step 2: Render images
         print("[2/4] Rendering slide images…")
+        t0 = time.monotonic()
         images = render_slides(str(input_path), temp_dir, expected_count=len(slides))
+        logger.info("[2/4] Render completed in %.2fs", time.monotonic() - t0)
 
         # Step 3: Generate audio
         print("[3/4] Generating audio…")
+        t0 = time.monotonic()
         audio_files = generate_audio_for_slides(
             slides,
             temp_dir=temp_dir,
@@ -125,9 +145,11 @@ def main() -> None:
             pronunciations=pronunciations,
             interactive=args.interactive,
         )
+        logger.info("[3/4] Audio generation completed in %.2fs", time.monotonic() - t0)
 
         # Step 4: Assemble video
         print("[4/4] Assembling video…")
+        t0 = time.monotonic()
         assemble_video(
             images,
             audio_files,
@@ -137,6 +159,7 @@ def main() -> None:
             videos=video_paths,
             audio_padding_ms=args.audio_padding,
         )
+        logger.info("[4/4] Assembly completed in %.2fs", time.monotonic() - t0)
 
         # Summary
         tts_count = sum(1 for s in slides if s.notes)
@@ -145,18 +168,22 @@ def main() -> None:
         parts = [f"{tts_count} narrated", f"{silent_count} silent"]
         if video_count:
             parts.append(f"{video_count} with screencast")
+        logger.info("Done: %d slides (%s), output=%s", len(slides), ", ".join(parts), output_path)
         print(f"\nDone! {len(slides)} slides processed ({', '.join(parts)}).")
         print(f"Output: {output_path}")
 
     except Exception:
+        logger.exception("Pipeline failed")
         print(f"\nError encountered. Temp files preserved at: {temp_dir}", file=sys.stderr)
         raise
 
     else:
         # Cleanup on success
         if not args.keep_temp and not user_temp:
+            logger.info("Cleaning up temp dir: %s", temp_dir)
             shutil.rmtree(temp_dir, ignore_errors=True)
         elif args.keep_temp:
+            logger.info("Temp files preserved at: %s", temp_dir)
             print(f"Temp files kept at: {temp_dir}")
 
 

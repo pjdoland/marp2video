@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import glob
+import logging
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def check_marp_cli() -> None:
@@ -45,14 +48,18 @@ def render_slides(input_md: str, temp_dir: Path, expected_count: int) -> list[Pa
         "--output", str(output_stem),
     ]
 
+    logger.debug("marp-cli command: %s", " ".join(cmd))
     print(f"  Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, capture_output=True, text=True)
+    logger.debug("marp-cli stdout: %s", result.stdout)
+    logger.debug("marp-cli stderr: %s", result.stderr)
     if result.returncode != 0:
         print("marp-cli stderr:", result.stderr, file=sys.stderr)
         raise RuntimeError(f"marp-cli exited with code {result.returncode}")
 
     # marp-cli produces slides.001, slides.002, … (no extension)
     images = sorted(glob.glob(str(temp_dir / "slides.[0-9][0-9][0-9]")))
+    logger.debug("Rendered %d image(s): %s", len(images), images)
 
     if len(images) != expected_count:
         print(

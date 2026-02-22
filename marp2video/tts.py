@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import json
+import logging
 import platform
 import re
 import subprocess
@@ -12,6 +13,8 @@ import warnings
 from pathlib import Path
 
 from .utils import generate_silent_wav
+
+logger = logging.getLogger(__name__)
 
 
 def load_pronunciations(path: Path) -> dict[str, str]:
@@ -69,16 +72,20 @@ def _resolve_device(device: str) -> str:
     import torch
 
     if device != "auto":
+        logger.debug("Device explicitly set to: %s", device)
         print(f"  Using device: {device}")
         return device
 
     if torch.cuda.is_available():
+        logger.debug("Auto-detected CUDA device")
         print("  Using CUDA for TTS")
         return "cuda"
     if torch.backends.mps.is_available():
+        logger.debug("Auto-detected MPS (Apple Silicon) device")
         print("  Using MPS (Apple Silicon) for TTS")
         return "mps"
 
+    logger.debug("No GPU available, falling back to CPU")
     print(
         "  WARNING: No GPU available — using CPU for TTS. "
         "This will be much slower.",
@@ -93,7 +100,9 @@ def _load_model(device: str = "auto"):
     from chatterbox.tts import ChatterboxTTS
 
     resolved = _resolve_device(device)
+    logger.debug("Loading ChatterboxTTS model on device=%s", resolved)
     model = ChatterboxTTS.from_pretrained(device=resolved)
+    logger.debug("Model loaded successfully")
     return model
 
 
@@ -113,6 +122,7 @@ def _move_model_to_cpu(model):
         torch.mps.empty_cache()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+    logger.warning("GPU OOM — moved model to CPU")
     print("  Moved model to CPU due to GPU memory pressure")
 
 
@@ -138,6 +148,7 @@ def _generate_slide_audio(
         " ".join(sentences[i:i + 3])
         for i in range(0, len(sentences), 3)
     ]
+    logger.debug("Slide %d: %d sentence(s) in %d chunk(s)", slide.index, len(sentences), len(sentence_groups))
 
     chunks: list = []
     try:
@@ -219,11 +230,16 @@ def generate_audio_for_slides(
         out_path = temp_dir / f"audio_{slide.index:03d}.wav"
 
         if slide.notes is None:
+            logger.debug("Slide %d: no notes, generating %ss silence", slide.index, hold_duration)
             generate_silent_wav(out_path, hold_duration)
             print(f"  Slide {slide.index}: silent ({hold_duration}s)")
         else:
+            logger.debug("Slide %d: notes text=%r", slide.index, slide.notes)
             if pronunciations:
+                original = slide.notes
                 slide.notes = apply_pronunciations(slide.notes, pronunciations)
+                if slide.notes != original:
+                    logger.debug("Slide %d: after pronunciations=%r", slide.index, slide.notes)
 
             tts_kwargs = dict(
                 voice_path=voice_path,
@@ -239,6 +255,7 @@ def generate_audio_for_slides(
             except Exception as exc:
                 if on_gpu and _is_oom(exc):
                     # Fall back to CPU and retry this slide
+                    logger.warning("Slide %d: GPU OOM, retrying on CPU", slide.index)
                     _move_model_to_cpu(model)
                     on_gpu = False
                     try:
@@ -247,12 +264,14 @@ def generate_audio_for_slides(
                         )
                     except Exception as retry_exc:
                         msg = f"Slide {slide.index}: TTS failed on CPU ({retry_exc}), substituting silence"
+                        logger.error(msg, exc_info=True)
                         print(f"  {msg}", file=sys.stderr)
                         generate_silent_wav(out_path, hold_duration)
                         audio_paths.append(out_path)
                         continue
                 else:
                     msg = f"Slide {slide.index}: TTS failed ({exc}), substituting silence"
+                    logger.error(msg, exc_info=True)
                     print(f"  {msg}", file=sys.stderr)
                     generate_silent_wav(out_path, hold_duration)
                     audio_paths.append(out_path)
@@ -268,14 +287,17 @@ def generate_audio_for_slides(
                 while True:
                     choice = input("  (y) keep  (n) regenerate  (r) replay  (q) quit: ").strip().lower()
                     if choice in ("", "y"):
+                        logger.debug("Slide %d: interactive — kept", slide.index)
                         break
                     if choice == "r":
                         _play_audio(out_path)
                         continue
                     if choice == "q":
+                        logger.info("Pipeline quit by user during interactive review")
                         print("  Quitting pipeline.")
                         sys.exit(0)
                     # choice == "n" or anything else: regenerate
+                    logger.debug("Slide %d: interactive — regenerating", slide.index)
                     print(f"  Regenerating slide {slide.index}…")
                     try:
                         combined, sr, n_sent, n_chunks = _generate_slide_audio(

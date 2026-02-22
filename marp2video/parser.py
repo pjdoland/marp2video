@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -52,6 +55,7 @@ def parse_marp(path: str) -> list[Slide]:
 
     slide_parts = parts[1:]  # everything after front matter
     slides: list[Slide] = []
+    logger.debug("Parsing %s: found %d slide block(s)", path, len(slide_parts))
 
     for i, part in enumerate(slide_parts):
         notes_fragments: list[str] = []
@@ -75,5 +79,7 @@ def parse_marp(path: str) -> list[Slide]:
         notes = "\n".join(notes_fragments) if notes_fragments else None
 
         slides.append(Slide(index=i + 1, body=body, notes=notes, video=video_path))
+        notes_len = len(notes) if notes else 0
+        logger.debug("  Slide %d: notes=%d chars, video=%s", i + 1, notes_len, video_path)
 
     return slides

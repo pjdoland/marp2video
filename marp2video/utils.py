@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import struct
 import subprocess
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def check_ffmpeg() -> None:
@@ -15,6 +18,8 @@ def check_ffmpeg() -> None:
     missing = [
         tool for tool in ("ffmpeg", "ffprobe") if shutil.which(tool) is None
     ]
+    if not missing:
+        logger.debug("ffmpeg/ffprobe found on PATH")
     if missing:
         print(
             f"Error: {', '.join(missing)} not found on PATH.\n"
@@ -103,4 +108,6 @@ def _get_duration(path: Path) -> float:
     if result.returncode != 0:
         raise RuntimeError(f"ffprobe failed on {path}: {result.stderr}")
     info = json.loads(result.stdout)
-    return float(info["format"]["duration"])
+    duration = float(info["format"]["duration"])
+    logger.debug("Duration of %s: %.4fs", path, duration)
+    return duration
