@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import gc
 import json
+import platform
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -38,6 +40,21 @@ def apply_pronunciations(text: str, mapping: dict[str, str]) -> str:
         pattern = re.compile(re.escape(word), re.IGNORECASE)
         text = pattern.sub(mapping[word], text)
     return text
+
+
+def _play_audio(path: Path) -> None:
+    """Play a WAV file using the platform's native audio command."""
+    system = platform.system()
+    if system == "Darwin":
+        cmd = ["afplay", str(path)]
+    elif system == "Linux":
+        cmd = ["aplay", str(path)]
+    elif system == "Windows":
+        cmd = ["cmd", "/c", "start", "", str(path)]
+    else:
+        print(f"  Warning: don't know how to play audio on {system}", file=sys.stderr)
+        return
+    subprocess.run(cmd, capture_output=True)
 
 
 def _split_sentences(text: str) -> list[str]:
@@ -159,6 +176,7 @@ def generate_audio_for_slides(
     temperature: float = 0.8,
     hold_duration: float,
     pronunciations: dict[str, str] | None = None,
+    interactive: bool = False,
 ) -> list[Path]:
     """Generate a WAV file for every slide. Returns list of audio paths.
 
@@ -242,6 +260,29 @@ def generate_audio_for_slides(
             del combined
             _flush_gpu()
             print(f"  Slide {slide.index}: TTS OK ({n_sent} sentence{'s' if n_sent != 1 else ''} in {n_chunks} chunk{'s' if n_chunks != 1 else ''})")
+
+            if interactive:
+                while True:
+                    _play_audio(out_path)
+                    choice = input("  Keep this audio? [Y/n/q] ").strip().lower()
+                    if choice in ("", "y"):
+                        break
+                    if choice == "q":
+                        print("  Quitting pipeline.")
+                        sys.exit(0)
+                    # choice == "n" or anything else: regenerate
+                    print(f"  Regenerating slide {slide.index}…")
+                    try:
+                        combined, sr, n_sent, n_chunks = _generate_slide_audio(
+                            model, slide, **tts_kwargs,
+                        )
+                    except Exception as regen_exc:
+                        print(f"  Regeneration failed ({regen_exc}), keeping previous audio.", file=sys.stderr)
+                        break
+                    torchaudio.save(str(out_path), combined, sr)
+                    del combined
+                    _flush_gpu()
+                    print(f"  Slide {slide.index}: TTS OK ({n_sent} sentence{'s' if n_sent != 1 else ''} in {n_chunks} chunk{'s' if n_chunks != 1 else ''})")
 
         audio_paths.append(out_path)
 

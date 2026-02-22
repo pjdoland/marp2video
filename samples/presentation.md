@@ -97,7 +97,7 @@ style: |
 
 ### Narrated Video Presentations from Markdown
 
-<!-- Hello, my name is PJ. Occasionally I have to make demo or training videos. Over the past year I've gotten increasingly frustrated with my process for producing these. So I decided to do something about it. -->
+<!-- Hello, my name is PJ. Occasionally I have to make demo or training videos. Over the past year I've gotten increasingly frustrated with my process for producing these. So I decided to finally do something about it. -->
 
 ---
 
@@ -108,7 +108,7 @@ style: |
 - You stumble over words, re-record, and stumble again
 - Eventually you get something usable
 
-<!-- If you want the audio to sound decent, you need a quiet room, a microphone, no background noise. Then you record your script, stumble over a word, do another take, and another. Eventually you get something usable. -->
+<!-- So what's the problem? If you want the presentation's audio to sound decent, you need a quiet room, a microphone, and no background noise. Then you record your script, stumble over a word, do another take, and another. Eventually you get something usable. -->
 
 ---
 
@@ -130,7 +130,7 @@ style: |
 Write slides in Markdown. Add speaker notes.
 Run one command. Get a narrated video.
 
-<!-- So in my free time I built this thing called marp2video. The idea is simple. You write your presentation in Markdown using the Marp format, put your narration in the speaker notes as HTML comments, and run one command. It spits out an MP4 with narration in your own voice. If you need to change something, you edit the text and regenerate. And it can all run locally on your laptop. -->
+<!-- So in my free time I built this thing called marp2video. The idea is simple. You write your presentation in Markdown using the Marp format, put your narration in the speaker notes as HTML comments, and run a single command. The utility spits out an MP4 with narration in your own voice. And if you need to change something, you can edit the text and just regenerate the MP4. And all of this can run locally on your laptop. -->
 
 ---
 
@@ -163,7 +163,7 @@ Run one command. Get a narrated video.
 - No separate captioning or transcription step
 - WCAG compliance without any extra work
 
-<!-- WCAG guidelines require text alternatives for multimedia, which usually means someone has to go back and caption the video after the fact. It's tedious, so it often doesn't happen. But with this approach you wrote the transcript first. The text alternative exists before the video does. -->
+<!-- Web Content Accessibility Guidelines require text alternatives for multimedia, which usually means someone has to go back and caption the video after the fact. It's tedious, so it often doesn't happen. But with this approach you wrote the transcript first. The text alternative exists before the video does. -->
 
 ---
 
@@ -197,7 +197,7 @@ class Slide:
     notes: str | None
 ```
 
-<!-- Parsing is the boring part. Split on triple-dash delimiters, skip the YAML front matter, pull out HTML comments as speaker notes. Marp uses HTML comments for its own directives too, things like underscore-class or underscore-paginate. Those get filtered out with a regex. What you're left with is a list of Slide dataclasses. Index, body, notes. -->
+<!-- Parsing is the boring part. Split on triple-dash delimiters, skip the YAML front matter, pull out HTML comments as speaker notes. Marp uses HTML comments for its own directives too, things like underscore-class or underscore-paginate. Those get filtered out with a regex. What you're left with is a list of Slide dataclasses. -->
 
 ---
 
@@ -250,7 +250,7 @@ slide.png + audio.wav  ──▶  segment_002.ts
 all .ts files  ──▶  concat demuxer  ──▶  output.mp4
 ```
 
-<!-- Last stage. Each slide becomes an MPEG transport stream segment. The PNG loops as video frames for the duration of that slide's audio. We use x264 with the stillimage tuning flag, so the encoder figures out that every frame is identical and the bitrate drops to almost nothing. Images get scaled and padded to nineteen twenty by ten eighty. Audio is encoded as 192 kilobits per second AAC. Then ffmpeg's concat demuxer joins all the segments. That last step is a stream copy, no re-encoding. Takes a couple of seconds. -->
+<!-- Last stage. Each slide becomes an MPEG transport stream segment. The PNG loops as video frames for the duration of that slide's audio. We use x264 with the stillimage tuning flag, so the encoder figures out that every frame is identical and the bitrate drops to almost nothing. Images get scaled and padded to nineteen twenty by ten eighty. Audio is encoded as 192 kilobits per second AAC. Then ffmpeg joins all the segments. That last step is a stream copy, no re-encoding. Takes a couple of seconds. -->
 
 ---
 
@@ -277,7 +277,7 @@ all .ts files  ──▶  concat demuxer  ──▶  output.mp4
 - On success, it is cleaned up (or kept with `--keep-temp`)
 - Files are zero-padded: `audio_001.wav`, `segment_001.ts` — easy to correlate
 
-<!-- Everything goes into one temp directory. PNGs, WAVs, transport stream segments, all of it. If a stage fails, that directory sticks around so you can see where things stopped. On success it gets cleaned up, unless you pass keep-temp. -->
+<!-- Everything goes into one temp directory. PNGs, WAVs, transport stream segments, all of it. If a stage fails, that directory sticks around so you can see where things stopped. On success it gets cleaned up, unless you pass a keep temp flag. -->
 
 ---
 
@@ -293,7 +293,7 @@ python -m marp2video deck.md --voice my-voice.wav
 - Tune with `--exaggeration`, `--cfg-weight`, `--temperature`
 - Fix mispronunciations with `--pronunciations overrides.json`
 
-<!-- For the voice sample, you can just record five to ten minutes of yourself reading varied content. Different emotions, different pacing. I actually booked an hour at a recording studio to do this so I'd get the best quality sample possible. Then point it at your slide deck, pass in your voice file, and a couple of minutes later you get an MP4. There are flags to tune expressiveness and cloning fidelity. I'll be using this for demos and training videos, but with a for-loop and a folder of Markdown files you could easily use this to build a YouTube empire of ten thousand AI-narrated brainrot videos. I'm not going to do that... Probably. -->
+<!-- For the reference sample for voice cloning, you can record five to ten minutes of yourself reading varied content. Different emotions, different pacing. I actually booked an hour at a recording studio to do this so I'd get the best quality sample possible. Then point it at your slide deck, pass in your voice file, and a couple of minutes later you get an MP4. There are flags to tune expressiveness and cloning fidelity. I'll be using this for demos and training videos, but with a for-loop and a folder of Markdown files you could easily use this to build a YouTube empire of ten thousand AI-narrated brainrot videos. I'm not going to do that… Probably. -->
 
 ---
 
@@ -303,7 +303,7 @@ This entire presentation was generated using *marp2video*.
 
 No microphone. No recording session. Just a Markdown file.
 
-<!-- So, full disclosure. This presentation was generated with marp2video. You can almost certainly tell. The cadence is a little off, some words land weird. But it still sounds better than what I would have actually recorded, which would be full of ums and ahs, pops, and breath sounds. The whole thing is a single Markdown file. If I needed to fix something, I'd edit the text and regenerate. The real me is probably getting coffee right now. -->
+<!-- So, full disclosure. This presentation was generated with marp2video. And you can almost certainly tell. The cadence is a little off, some words land weird. But it still sounds better than what I would have actually recorded, which would be full of ums and ahs, pops, and breath sounds. The whole thing is a single Markdown file. If I needed to fix something, I'd edit the text and regenerate. The real me is probably getting coffee right now. -->
 
 ---
 
@@ -317,8 +317,8 @@ No microphone. No recording session. Just a Markdown file.
 - 2.5 hrs building the tool with Claude Code
 - 30 min writing this deck in Vim
 
-github.com/pjdoland/marp2video
+https://github.com/pjdoland/marp2video
 
 *Questions?*
 
-<!-- So here's the actual time breakdown. One hour at Cue Recording Studios in Falls Church, Virginia, getting a studio-quality recording of my voice. That cost eighty-five bucks. Two and a half hours with Claude Code building the entire pipeline, start to finish. And about thirty minutes writing this presentation, mostly just editing text files in Vim with Claude helping. Then I kicked off the generation and walked away. That's it. The repo is on GitHub if you want to try it. I'm happy to walk through the setup or answer questions. Thanks. -->
+<!-- So here's the actual time breakdown. One hour at Cue Recording Studios in Falls Church, Virginia, getting a studio-quality recording of my voice. That cost eighty-five bucks. Two and a half hours with Claude Code building the entire pipeline, start to finish. And about thirty minutes writing this presentation, mostly just editing text files in Vim with Claude helping. Then I kicked off the generation and walked away. That's it. The repo is on GitHub if you want to try it. I'm happy to walk through the setup or answer questions. Thanks……… -->

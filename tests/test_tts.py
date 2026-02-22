@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from marp2video.tts import (
+    _play_audio,
     _split_sentences,
     apply_pronunciations,
     load_pronunciations,
@@ -88,6 +89,36 @@ class TestApplyPronunciations:
         mapping = {"Visual Studio Code": "VS Code", "Code": "code editor"}
         result = apply_pronunciations("Open Visual Studio Code now.", mapping)
         assert "VS code editor" in result
+
+
+# ---------------------------------------------------------------------------
+# _play_audio
+# ---------------------------------------------------------------------------
+
+class TestPlayAudio:
+    def test_macos_uses_afplay(self, tmp_path):
+        p = tmp_path / "test.wav"
+        p.write_bytes(b"fake")
+        with patch("marp2video.tts.platform.system", return_value="Darwin"), \
+             patch("marp2video.tts.subprocess.run") as mock_run:
+            _play_audio(p)
+        mock_run.assert_called_once_with(["afplay", str(p)], capture_output=True)
+
+    def test_linux_uses_aplay(self, tmp_path):
+        p = tmp_path / "test.wav"
+        p.write_bytes(b"fake")
+        with patch("marp2video.tts.platform.system", return_value="Linux"), \
+             patch("marp2video.tts.subprocess.run") as mock_run:
+            _play_audio(p)
+        mock_run.assert_called_once_with(["aplay", str(p)], capture_output=True)
+
+    def test_windows_uses_start(self, tmp_path):
+        p = tmp_path / "test.wav"
+        p.write_bytes(b"fake")
+        with patch("marp2video.tts.platform.system", return_value="Windows"), \
+             patch("marp2video.tts.subprocess.run") as mock_run:
+            _play_audio(p)
+        mock_run.assert_called_once_with(["cmd", "/c", "start", "", str(p)], capture_output=True)
 
 
 # ---------------------------------------------------------------------------
@@ -313,3 +344,122 @@ class TestGenerateAudioForSlides:
         assert paths[0].exists()
         # Verify it's a valid WAV (silent fallback)
         assert paths[0].read_bytes()[:4] == b"RIFF"
+
+
+# ---------------------------------------------------------------------------
+# Interactive mode
+# ---------------------------------------------------------------------------
+
+class TestInteractiveMode:
+    """Test the interactive TTS review loop."""
+
+    def _make_slide(self, index, notes=None, video=None):
+        from marp2video.parser import Slide
+        return Slide(index=index, body="body", notes=notes, video=video)
+
+    def _setup_mocks(self):
+        mock_torch = MagicMock()
+        mock_torch.backends.mps.is_available.return_value = False
+        mock_torch.cuda.is_available.return_value = False
+        mock_torchaudio = MagicMock()
+
+        mock_model = MagicMock()
+        mock_model.sr = 24000
+        mock_model.device = "cpu"
+        mock_model.generate.return_value = mock_torch.zeros(1, 24000)
+        mock_torch.zeros.return_value.cpu.return_value = mock_torch.zeros(1, 24000)
+        mock_torch.cat.return_value = mock_torch.zeros(1, 24000)
+
+        return mock_torch, mock_torchaudio, mock_model
+
+    def test_accept_with_y(self, tmp_path):
+        """Pressing 'y' keeps the audio and moves on."""
+        slides = [self._make_slide(1, notes="Hello world.")]
+        mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
+
+        with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
+            with patch("marp2video.tts._load_model", return_value=mock_model), \
+                 patch("marp2video.tts._play_audio") as mock_play, \
+                 patch("builtins.input", return_value="y"):
+                from marp2video.tts import generate_audio_for_slides
+                paths = generate_audio_for_slides(
+                    slides, temp_dir=tmp_path, voice_path=None,
+                    hold_duration=2.0, interactive=True,
+                )
+
+        assert len(paths) == 1
+        mock_play.assert_called_once()
+        # Model generate called only once (no regeneration)
+        assert mock_model.generate.call_count == 1
+
+    def test_accept_with_empty_input(self, tmp_path):
+        """Pressing Enter (empty input) keeps the audio."""
+        slides = [self._make_slide(1, notes="Hello world.")]
+        mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
+
+        with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
+            with patch("marp2video.tts._load_model", return_value=mock_model), \
+                 patch("marp2video.tts._play_audio"), \
+                 patch("builtins.input", return_value=""):
+                from marp2video.tts import generate_audio_for_slides
+                paths = generate_audio_for_slides(
+                    slides, temp_dir=tmp_path, voice_path=None,
+                    hold_duration=2.0, interactive=True,
+                )
+
+        assert len(paths) == 1
+        assert mock_model.generate.call_count == 1
+
+    def test_reject_then_accept(self, tmp_path):
+        """Pressing 'n' regenerates, then 'y' keeps."""
+        slides = [self._make_slide(1, notes="Hello world.")]
+        mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
+
+        with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
+            with patch("marp2video.tts._load_model", return_value=mock_model), \
+                 patch("marp2video.tts._play_audio"), \
+                 patch("builtins.input", side_effect=["n", "y"]):
+                from marp2video.tts import generate_audio_for_slides
+                paths = generate_audio_for_slides(
+                    slides, temp_dir=tmp_path, voice_path=None,
+                    hold_duration=2.0, interactive=True,
+                )
+
+        assert len(paths) == 1
+        # generate called twice: original + regeneration
+        assert mock_model.generate.call_count == 2
+
+    def test_quit_exits(self, tmp_path):
+        """Pressing 'q' exits the pipeline via SystemExit."""
+        slides = [self._make_slide(1, notes="Hello world.")]
+        mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
+
+        with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
+            with patch("marp2video.tts._load_model", return_value=mock_model), \
+                 patch("marp2video.tts._play_audio"), \
+                 patch("builtins.input", return_value="q"):
+                from marp2video.tts import generate_audio_for_slides
+                with pytest.raises(SystemExit):
+                    generate_audio_for_slides(
+                        slides, temp_dir=tmp_path, voice_path=None,
+                        hold_duration=2.0, interactive=True,
+                    )
+
+    def test_silent_slides_skip_interactive(self, tmp_path):
+        """Silent slides (no notes) should not trigger the interactive prompt."""
+        slides = [self._make_slide(1)]  # no notes
+        mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
+
+        with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
+            with patch("marp2video.tts._load_model", return_value=mock_model), \
+                 patch("marp2video.tts._play_audio") as mock_play, \
+                 patch("builtins.input") as mock_input:
+                from marp2video.tts import generate_audio_for_slides
+                paths = generate_audio_for_slides(
+                    slides, temp_dir=tmp_path, voice_path=None,
+                    hold_duration=2.0, interactive=True,
+                )
+
+        assert len(paths) == 1
+        mock_play.assert_not_called()
+        mock_input.assert_not_called()

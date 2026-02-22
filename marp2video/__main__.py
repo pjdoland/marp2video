@@ -42,6 +42,8 @@ def main() -> None:
                         help="Milliseconds of silence before and after each slide's audio (default: 0)")
     parser.add_argument("--keep-temp", action="store_true",
                         help="Don't delete intermediate files after rendering")
+    parser.add_argument("--interactive", "-i", action="store_true",
+                        help="Review and approve each slide's TTS audio before continuing")
 
     args = parser.parse_args()
 
@@ -121,6 +123,7 @@ def main() -> None:
             temperature=args.temperature,
             hold_duration=args.hold_duration,
             pronunciations=pronunciations,
+            interactive=args.interactive,
         )
 
         # Step 4: Assemble video
