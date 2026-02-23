@@ -50,7 +50,7 @@ Slidev-specific keys include: `transition`, `clicks`, `drawings`, `routerMode`, 
 
 ## Speaker notes
 
-Speaker notes are written as HTML comments. marp2video extracts them and synthesizes speech from the text.
+Speaker notes are written as HTML comments. deck2video extracts them and synthesizes speech from the text.
 
 ### Basic usage
 
@@ -118,7 +118,7 @@ Slides with no HTML comments (or only directive/video comments) get `notes=None`
 
 ## Marp directive comments
 
-In Marp decks, certain HTML comments are styling directives, not speaker notes. marp2video recognizes and filters these out:
+In Marp decks, certain HTML comments are styling directives, not speaker notes. deck2video recognizes and filters these out:
 
 ```markdown
 <!-- _class: lead -->
@@ -149,7 +149,7 @@ class: text-center
 <!-- This slide uses a centered layout. -->
 ```
 
-marp2video's Slidev parser strips per-slide frontmatter from the slide body. It recognizes lines matching `key: value` at the start of each slide block. Unlike Marp, the Slidev parser does not filter directive comments. All HTML comments are treated as speaker notes (except video directives).
+deck2video's Slidev parser strips per-slide frontmatter from the slide body. It recognizes lines matching `key: value` at the start of each slide block. Unlike Marp, the Slidev parser does not filter directive comments. All HTML comments are treated as speaker notes (except video directives).
 
 ## Slidev Vue components
 
@@ -175,9 +175,9 @@ This appears on click.
 </v-clicks>
 ```
 
-marp2video does not process these components; they're passed through to the Slidev CLI for rendering. The presence of Vue components (`v-click`, `v-clicks`, `v-after`, `v-click-hide`, `Arrow`, `RenderWhen`, `SlidevVideo`) is used as a signal for [auto-detection](format-detection.md).
+deck2video does not process these components; they're passed through to the Slidev CLI for rendering. The presence of Vue components (`v-click`, `v-clicks`, `v-after`, `v-click-hide`, `Arrow`, `RenderWhen`, `SlidevVideo`) is used as a signal for [auto-detection](format-detection.md).
 
-Note: since marp2video exports static PNGs, click animations in the final video will show the slide in its final state (all elements visible). If you need step-by-step reveals, consider splitting them into separate slides.
+Note: since deck2video exports static PNGs, click animations in the final video will show the slide in its final state (all elements visible). If you need step-by-step reveals, consider splitting them into separate slides.
 
 ## Video directive
 
@@ -239,7 +239,7 @@ Write full sentences. Fragments and bullet-point-style notes sound awkward when 
 
 Avoid abbreviations the engine might mispronounce. Use [pronunciation overrides](voice-and-tts.md#pronunciation-overrides) for technical terms like "kubectl", "nginx", or "PostgreSQL".
 
-Watch out for sentence splitting. marp2video splits on `.`, `!`, or `?` followed by whitespace. Abbreviations like "e.g." or "Dr." will cause a split mid-sentence. Spell them out instead ("for example", not "e.g.").
+Watch out for sentence splitting. deck2video splits on `.`, `!`, or `?` followed by whitespace. Abbreviations like "e.g." or "Dr." will cause a split mid-sentence. Spell them out instead ("for example", not "e.g.").
 
 Keep notes concise. Long notes mean long audio, which means long video segments. Write what you'd actually say while presenting.
 

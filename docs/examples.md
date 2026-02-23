@@ -29,7 +29,7 @@ marp: true
 **Command:**
 
 ```bash
-python -m marp2video slides.md
+python -m deck2video slides.md
 ```
 
 This produces `slides.mp4` with the default Chatterbox voice. The "Thank You" slide has no notes, so it's held silently for 3 seconds.
@@ -63,7 +63,7 @@ layout: center
 **Command:**
 
 ```bash
-python -m marp2video slides.md
+python -m deck2video slides.md
 ```
 
 The `transition` key in frontmatter triggers Slidev auto-detection. Per-slide frontmatter like `layout: center` is stripped from the body before rendering.
@@ -75,7 +75,7 @@ Note: since the video is a sequence of static PNGs, slide transitions from Slide
 Record a 10-20 second WAV of yourself speaking naturally, then:
 
 ```bash
-python -m marp2video deck.md \
+python -m deck2video deck.md \
     --voice ~/recordings/my-voice.wav \
     --exaggeration 0.6 \
     --cfg-weight 0.3 \
@@ -127,7 +127,7 @@ project/
 **Command:**
 
 ```bash
-python -m marp2video slides.md --voice voice.wav --audio-padding 200
+python -m deck2video slides.md --voice voice.wav --audio-padding 200
 ```
 
 What happens:
@@ -164,7 +164,7 @@ What happens:
 **Command:**
 
 ```bash
-python -m marp2video deck.md \
+python -m deck2video deck.md \
     --voice voice.wav \
     --pronunciations pronunciations.json
 ```
@@ -176,7 +176,7 @@ Note: longer keys are matched first, so `"MySQL"` → `"my sequel"` is applied b
 Review each slide's audio before committing:
 
 ```bash
-python -m marp2video deck.md \
+python -m deck2video deck.md \
     --voice voice.wav \
     --interactive \
     --keep-temp
@@ -203,7 +203,7 @@ The `--keep-temp` flag ensures you can inspect individual WAV files after the ru
 ## Full production pipeline
 
 ```bash
-python -m marp2video presentation.md \
+python -m deck2video presentation.md \
     --voice ~/recordings/my-voice.wav \
     --pronunciations pronunciations.json \
     --exaggeration 0.6 \
@@ -222,7 +222,7 @@ python -m marp2video presentation.md \
 If you don't have a GPU or want to avoid GPU memory issues:
 
 ```bash
-python -m marp2video deck.md --voice voice.wav --device cpu
+python -m deck2video deck.md --voice voice.wav --device cpu
 ```
 
 This is significantly slower but works on any machine. You'll see:
@@ -236,7 +236,7 @@ This is significantly slower but works on any machine. You'll see:
 Keep build artifacts in a known location:
 
 ```bash
-python -m marp2video deck.md \
+python -m deck2video deck.md \
     --voice voice.wav \
     --temp-dir ./build \
     --output output.mp4

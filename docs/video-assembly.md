@@ -60,7 +60,7 @@ There is no option to change the output resolution. It's hardcoded at 1920x1080.
 The `--audio-padding` flag adds silence before and after each slide's audio:
 
 ```bash
-python -m marp2video deck.md --audio-padding 300
+python -m deck2video deck.md --audio-padding 300
 ```
 
 The value is in **milliseconds**. `--audio-padding 300` adds 300ms of silence before the narration starts and 300ms after it ends, extending each slide's total duration by 600ms.
@@ -83,7 +83,7 @@ When no screencasts are present, the default framerate is **24 fps**.
 ### Manual override
 
 ```bash
-python -m marp2video deck.md --fps 30
+python -m deck2video deck.md --fps 30
 ```
 
 The `--fps` flag overrides auto-detection entirely. The specified framerate is used for all segments.

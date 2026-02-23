@@ -1,15 +1,15 @@
-# marp2video
+# deck2video
 
 Turn a [Marp](https://marp.app/) or [Slidev](https://sli.dev/) slide deck into a
 narrated video. Write your slides in Markdown, add speaker notes as HTML
-comments, and marp2video handles the rest: rendering, text-to-speech with voice
+comments, and deck2video handles the rest: rendering, text-to-speech with voice
 cloning, and final MP4 assembly. The presentation format is auto-detected.
 
 ## Quick Start
 
 ```bash
 source setup.sh
-python -m marp2video presentation.md --voice voice-sample.wav
+python -m deck2video presentation.md --voice voice-sample.wav
 ```
 
 The setup script checks for system dependencies, creates a Python 3.11 virtual
@@ -109,7 +109,7 @@ layout: center
 ## Usage
 
 ```bash
-python -m marp2video <input.md> [options]
+python -m deck2video <input.md> [options]
 ```
 
 ### Options
@@ -135,10 +135,10 @@ python -m marp2video <input.md> [options]
 
 ```bash
 # Basic conversion (uses default TTS voice)
-python -m marp2video deck.md
+python -m deck2video deck.md
 
 # Voice cloning with tuned generation parameters
-python -m marp2video deck.md \
+python -m deck2video deck.md \
     --voice ~/models/my-voice.wav \
     --output talk.mp4 \
     --exaggeration 0.5 \
@@ -146,18 +146,18 @@ python -m marp2video deck.md \
     --temperature 0.6
 
 # Force CPU and keep intermediate files for debugging
-python -m marp2video deck.md \
+python -m deck2video deck.md \
     --device cpu \
     --keep-temp \
     --temp-dir ./build
 
 # With pronunciation overrides
-python -m marp2video deck.md \
+python -m deck2video deck.md \
     --voice ~/models/my-voice.wav \
     --pronunciations pronunciations.json
 
 # Explicit Slidev format
-python -m marp2video slidev-deck.md --format slidev --voice voice.wav
+python -m deck2video slidev-deck.md --format slidev --voice voice.wav
 ```
 
 ## Interactive Mode
@@ -220,7 +220,7 @@ respellings:
 Pass it with `--pronunciations`:
 
 ```bash
-python -m marp2video deck.md --pronunciations pronunciations.json
+python -m deck2video deck.md --pronunciations pronunciations.json
 ```
 
 Matching is case-insensitive. Longer phrases are matched first, so a multi-word

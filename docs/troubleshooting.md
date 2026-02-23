@@ -92,7 +92,7 @@ This means the parser found a different number of slides than the renderer produ
 Moved model to CPU due to GPU memory pressure
 ```
 
-This is informational. marp2video automatically falls back to CPU, so processing continues but slower. If you're running other GPU-intensive tasks, close them first. You can also use `--device cpu` to skip the GPU entirely.
+This is informational. deck2video automatically falls back to CPU, so processing continues but slower. If you're running other GPU-intensive tasks, close them first. You can also use `--device cpu` to skip the GPU entirely.
 
 If the CPU retry also fails, the slide gets a silent WAV and the pipeline continues:
 
@@ -105,20 +105,20 @@ Slide 4: TTS failed on CPU (error details), substituting silence
 The `--keep-temp` flag preserves all intermediate files after a successful run:
 
 ```bash
-python -m marp2video deck.md --keep-temp
+python -m deck2video deck.md --keep-temp
 ```
 
 On failure, intermediate files are always preserved (even without `--keep-temp`). The temp directory path is printed:
 
 ```
-Error encountered. Temp files preserved at: /tmp/marp2video_abc123
+Error encountered. Temp files preserved at: /tmp/deck2video_abc123
 ```
 
 ## Temp directory contents
 
 | File | Description |
 |------|-------------|
-| `marp2video.log` | Detailed debug log of the entire pipeline run |
+| `deck2video.log` | Detailed debug log of the entire pipeline run |
 | `slides.001` | Rendered PNG for slide 1 (Marp, no extension) |
 | `slides.001.png` | Rendered PNG for slide 1 (Slidev, with extension) |
 | `audio_001.wav` | TTS audio for slide 1 |
@@ -137,10 +137,10 @@ Error encountered. Temp files preserved at: /tmp/marp2video_abc123
 
 ### Inspecting the log file
 
-The log file (`marp2video.log`) contains DEBUG-level output for the entire run:
+The log file (`deck2video.log`) contains DEBUG-level output for the entire run:
 
 ```bash
-cat /tmp/marp2video_abc123/marp2video.log
+cat /tmp/deck2video_abc123/deck2video.log
 ```
 
 It includes:
@@ -158,10 +158,10 @@ You can listen to individual slide audio files to identify problems:
 
 ```bash
 # macOS
-afplay /tmp/marp2video_abc123/audio_003.wav
+afplay /tmp/deck2video_abc123/audio_003.wav
 
 # Linux
-aplay /tmp/marp2video_abc123/audio_003.wav
+aplay /tmp/deck2video_abc123/audio_003.wav
 ```
 
 ## Custom temp directory
@@ -169,7 +169,7 @@ aplay /tmp/marp2video_abc123/audio_003.wav
 Use `--temp-dir` to control where intermediate files are written:
 
 ```bash
-python -m marp2video deck.md --temp-dir ./build
+python -m deck2video deck.md --temp-dir ./build
 ```
 
 When using a custom temp directory:

@@ -1,6 +1,6 @@
 # Voice and TTS
 
-marp2video uses [Chatterbox TTS](https://github.com/resemble-ai/chatterbox) for speech synthesis. Chatterbox is a neural TTS model that supports zero-shot voice cloning from a short audio sample. marp2video loads the model once and synthesizes all slides sequentially.
+deck2video uses [Chatterbox TTS](https://github.com/resemble-ai/chatterbox) for speech synthesis. Chatterbox is a neural TTS model that supports zero-shot voice cloning from a short audio sample. deck2video loads the model once and synthesizes all slides sequentially.
 
 The model and its dependencies (torch, torchaudio, chatterbox) are lazy-loaded. They're only imported when at least one slide has speaker notes. If your deck has no notes at all, the TTS model is never loaded.
 
@@ -9,7 +9,7 @@ The model and its dependencies (torch, torchaudio, chatterbox) are lazy-loaded. 
 Pass a reference WAV file with `--voice` to clone a speaker's voice:
 
 ```bash
-python -m marp2video deck.md --voice ~/recordings/my-voice.wav
+python -m deck2video deck.md --voice ~/recordings/my-voice.wav
 ```
 
 ### What makes a good reference WAV
@@ -69,7 +69,7 @@ Each regeneration produces different output because the model is stochastic. If 
 
 ## Device selection
 
-marp2video auto-detects the best available compute device for TTS:
+deck2video auto-detects the best available compute device for TTS:
 
 1. CUDA (NVIDIA GPU), checked first
 2. MPS (Apple Silicon GPU)
@@ -78,9 +78,9 @@ marp2video auto-detects the best available compute device for TTS:
 Override with `--device`:
 
 ```bash
-python -m marp2video deck.md --device cpu
-python -m marp2video deck.md --device cuda
-python -m marp2video deck.md --device mps
+python -m deck2video deck.md --device cpu
+python -m deck2video deck.md --device cuda
+python -m deck2video deck.md --device mps
 ```
 
 When auto-detecting, the tool prints which device was selected:
@@ -97,7 +97,7 @@ If no GPU is available, a warning is printed to stderr:
 
 ## GPU out-of-memory fallback
 
-If the TTS model runs out of GPU memory during generation, marp2video automatically moves the model to CPU, frees GPU memory, retries the failed slide, and continues processing all remaining slides on CPU.
+If the TTS model runs out of GPU memory during generation, deck2video automatically moves the model to CPU, frees GPU memory, retries the failed slide, and continues processing all remaining slides on CPU.
 
 If the CPU retry also fails, the slide gets a silent WAV of `--hold-duration` seconds, and the pipeline continues with the next slide.
 
@@ -177,7 +177,7 @@ Create a JSON file with a flat object mapping words/phrases to their phonetic re
 Pass it with `--pronunciations`:
 
 ```bash
-python -m marp2video deck.md --pronunciations pronunciations.json
+python -m deck2video deck.md --pronunciations pronunciations.json
 ```
 
 ### Matching rules

@@ -60,10 +60,10 @@ What the script does:
 5. If you said yes to Slidev: installs `@slidev/cli` globally and Playwright Chromium.
 6. Activates the virtual environment.
 
-After setup completes, you can run marp2video directly:
+After setup completes, you can run deck2video directly:
 
 ```bash
-python -m marp2video presentation.md --voice voice-sample.wav
+python -m deck2video presentation.md --voice voice-sample.wav
 ```
 
 ## First run
@@ -94,18 +94,18 @@ marp: true
 
 The third slide has no speaker notes, so it will be held as a silent still image (3 seconds by default).
 
-### 2. Run marp2video
+### 2. Run deck2video
 
 Without voice cloning (uses the default Chatterbox voice):
 
 ```bash
-python -m marp2video demo.md
+python -m deck2video demo.md
 ```
 
 With voice cloning:
 
 ```bash
-python -m marp2video demo.md --voice my-voice.wav
+python -m deck2video demo.md --voice my-voice.wav
 ```
 
 You'll see output like:
@@ -115,7 +115,7 @@ You'll see output like:
 [1/4] Parsing slides...
   Found 3 slides
 [2/4] Rendering slide images...
-  Running: npx @marp-team/marp-cli demo.md --images png --image-scale 2 --no-stdin --output /tmp/marp2video_.../slides
+  Running: npx @marp-team/marp-cli demo.md --images png --image-scale 2 --no-stdin --output /tmp/deck2video_.../slides
 [3/4] Generating audio...
   Using MPS (Apple Silicon) for TTS
   Slide 1: TTS OK (1 sentence in 1 chunk)

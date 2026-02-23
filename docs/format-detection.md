@@ -1,6 +1,6 @@
 # Format detection
 
-When you don't specify `--format`, marp2video auto-detects whether a file is Marp or Slidev by inspecting frontmatter and body content.
+When you don't specify `--format`, deck2video auto-detects whether a file is Marp or Slidev by inspecting frontmatter and body content.
 
 ## Detection priority chain
 
@@ -96,10 +96,10 @@ Use `--format` to bypass auto-detection entirely:
 
 ```bash
 # Force Marp
-python -m marp2video deck.md --format marp
+python -m deck2video deck.md --format marp
 
 # Force Slidev
-python -m marp2video deck.md --format slidev
+python -m deck2video deck.md --format slidev
 ```
 
 When `--format` is set to `marp` or `slidev`, the detection step is skipped completely.
@@ -114,7 +114,7 @@ When `--format` is set to `marp` or `slidev`, the detection step is skipped comp
 
 ## Logging
 
-Detection decisions are logged at the INFO level. When debugging, check the log file in the temp directory (`marp2video.log`) for lines like:
+Detection decisions are logged at the INFO level. When debugging, check the log file in the temp directory (`deck2video.log`) for lines like:
 
 ```
 Detected Marp format (marp: true in frontmatter)

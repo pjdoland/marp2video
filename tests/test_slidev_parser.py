@@ -1,10 +1,10 @@
-"""Tests for marp2video.slidev_parser — Slidev markdown parsing."""
+"""Tests for deck2video.slidev_parser — Slidev markdown parsing."""
 
 from __future__ import annotations
 
 import pytest
 
-from marp2video.slidev_parser import parse_slidev
+from deck2video.slidev_parser import parse_slidev
 
 
 class TestBasicParsing:

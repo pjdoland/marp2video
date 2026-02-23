@@ -1,4 +1,4 @@
-"""Tests for marp2video.slidev_renderer — Slidev CLI rendering."""
+"""Tests for deck2video.slidev_renderer — Slidev CLI rendering."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from marp2video.slidev_renderer import check_slidev_cli, render_slidev_slides
+from deck2video.slidev_renderer import check_slidev_cli, render_slidev_slides
 
 
 class TestCheckSlidevCli:
@@ -59,7 +59,7 @@ class TestRenderSlidevSlides:
 
         with patch("shutil.which", side_effect=which_mock):
             with patch("subprocess.run", return_value=MagicMock(returncode=0, stdout="", stderr="")):
-                with patch("marp2video.slidev_renderer.check_slidev_cli"):
+                with patch("deck2video.slidev_renderer.check_slidev_cli"):
                     result = render_slidev_slides("deck.md", tmp_path, expected_count=1)
 
         assert len(result) == 1

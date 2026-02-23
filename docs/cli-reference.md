@@ -3,7 +3,7 @@
 ## Synopsis
 
 ```
-python -m marp2video <input> [options]
+python -m deck2video <input> [options]
 ```
 
 ## Positional arguments
@@ -13,7 +13,7 @@ python -m marp2video <input> [options]
 Path to the Marp or Slidev markdown file.
 
 - **Required:** yes
-- **Example:** `python -m marp2video slides.md`
+- **Example:** `python -m deck2video slides.md`
 
 ## Input / output options
 
@@ -40,7 +40,7 @@ Presentation format. Controls which parser and renderer are used.
 Directory for intermediate files (rendered PNGs, audio WAVs, video segments, log file).
 
 - **Type:** string (directory path)
-- **Default:** System temp directory (a `marp2video_` prefixed directory in `/tmp` or equivalent)
+- **Default:** System temp directory (a `deck2video_` prefixed directory in `/tmp` or equivalent)
 - **Details:** If the directory doesn't exist, it's created. When using a custom temp dir, it is **never** automatically cleaned up (even without `--keep-temp`), since you've explicitly chosen its location.
 - **Example:** `--temp-dir ./build`
 

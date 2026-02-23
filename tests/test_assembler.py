@@ -1,4 +1,4 @@
-"""Tests for marp2video.assembler — ffmpeg video assembly."""
+"""Tests for deck2video.assembler — ffmpeg video assembly."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from marp2video.assembler import (
+from deck2video.assembler import (
     _SCALE_PAD_FILTER,
     _VIDEO_SCALE_PAD_FILTER,
     _make_segment,
@@ -35,8 +35,8 @@ def _fail_result():
 # ---------------------------------------------------------------------------
 
 class TestMakeSegment:
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_creates_segment_file(self, mock_run, mock_dur, tmp_path):
         img = tmp_path / "slide.001"
         img.touch()
@@ -46,8 +46,8 @@ class TestMakeSegment:
         seg = _make_segment(1, img, audio, tmp_path, fps=24)
         assert seg == tmp_path / "segment_001.ts"
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_ffmpeg_command_structure(self, mock_run, mock_dur, tmp_path):
         img = tmp_path / "slide.001"
         img.touch()
@@ -71,8 +71,8 @@ class TestMakeSegment:
         assert "mpegts" in cmd
         assert _SCALE_PAD_FILTER in cmd
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_duration_passed_to_ffmpeg(self, mock_run, mock_dur, tmp_path):
         img = tmp_path / "slide.001"
         img.touch()
@@ -85,8 +85,8 @@ class TestMakeSegment:
         t_idx = cmd.index("-t")
         assert cmd[t_idx + 1] == "5.0000"
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_fail_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_fail_result())
     def test_ffmpeg_failure_raises(self, mock_run, mock_dur, tmp_path):
         img = tmp_path / "slide.001"
         img.touch()
@@ -102,8 +102,8 @@ class TestMakeSegment:
 # ---------------------------------------------------------------------------
 
 class TestMakeSegmentPadding:
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_no_adelay_when_padding_zero(self, mock_run, mock_dur, tmp_path):
         img = tmp_path / "slide.001"
         img.touch()
@@ -114,8 +114,8 @@ class TestMakeSegmentPadding:
         cmd = mock_run.call_args[0][0]
         assert "-af" not in cmd
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_adelay_present_when_padding_set(self, mock_run, mock_dur, tmp_path):
         img = tmp_path / "slide.001"
         img.touch()
@@ -127,8 +127,8 @@ class TestMakeSegmentPadding:
         af_idx = cmd.index("-af")
         assert "adelay=500|500" in cmd[af_idx + 1]
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_duration_extended_by_double_padding(self, mock_run, mock_dur, tmp_path):
         img = tmp_path / "slide.001"
         img.touch()
@@ -147,9 +147,9 @@ class TestMakeSegmentPadding:
 # ---------------------------------------------------------------------------
 
 class TestMakeVideoSegment:
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_creates_segment(self, mock_run, mock_adur, mock_vdur, tmp_path):
         video = tmp_path / "demo.mov"
         video.touch()
@@ -159,9 +159,9 @@ class TestMakeVideoSegment:
         seg = _make_video_segment(1, video, audio, tmp_path, fps=30)
         assert seg == tmp_path / "segment_001.ts"
 
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_uses_video_duration_when_longer(self, mock_run, mock_adur, mock_vdur, tmp_path):
         video = tmp_path / "demo.mov"
         video.touch()
@@ -175,9 +175,9 @@ class TestMakeVideoSegment:
         t_idx = cmd.index("-t")
         assert cmd[t_idx + 1] == "10.0000"
 
-    @patch("marp2video.assembler.get_video_duration", return_value=5.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=12.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=5.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=12.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_tpad_when_audio_longer(self, mock_run, mock_adur, mock_vdur, tmp_path):
         """When audio is longer than video, tpad should freeze last frame."""
         video = tmp_path / "demo.mov"
@@ -199,9 +199,9 @@ class TestMakeVideoSegment:
         assert "stop_mode=clone" in vf_value
         assert "7.0000" in vf_value  # 12 - 5 = 7
 
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_no_tpad_when_video_longer(self, mock_run, mock_adur, mock_vdur, tmp_path):
         video = tmp_path / "demo.mov"
         video.touch()
@@ -215,9 +215,9 @@ class TestMakeVideoSegment:
         vf_value = cmd[vf_idx + 1]
         assert "tpad" not in vf_value
 
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_maps_video_and_audio_streams(self, mock_run, mock_adur, mock_vdur, tmp_path):
         video = tmp_path / "demo.mov"
         video.touch()
@@ -233,9 +233,9 @@ class TestMakeVideoSegment:
         assert cmd[map_indices[0] + 1] == "0:v"
         assert cmd[map_indices[1] + 1] == "1:a"
 
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_fail_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_fail_result())
     def test_ffmpeg_failure_raises(self, mock_run, mock_adur, mock_vdur, tmp_path):
         video = tmp_path / "demo.mov"
         video.touch()
@@ -251,9 +251,9 @@ class TestMakeVideoSegment:
 # ---------------------------------------------------------------------------
 
 class TestMakeVideoSegmentPadding:
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_adelay_present_when_padding_set(self, mock_run, mock_adur, mock_vdur, tmp_path):
         video = tmp_path / "demo.mov"
         video.touch()
@@ -265,9 +265,9 @@ class TestMakeVideoSegmentPadding:
         af_idx = cmd.index("-af")
         assert "adelay=300|300" in cmd[af_idx + 1]
 
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_no_adelay_when_padding_zero(self, mock_run, mock_adur, mock_vdur, tmp_path):
         video = tmp_path / "demo.mov"
         video.touch()
@@ -278,9 +278,9 @@ class TestMakeVideoSegmentPadding:
         cmd = mock_run.call_args[0][0]
         assert "-af" not in cmd
 
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=5.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=5.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_duration_extended_by_double_padding(self, mock_run, mock_adur, mock_vdur, tmp_path):
         video = tmp_path / "demo.mov"
         video.touch()
@@ -294,9 +294,9 @@ class TestMakeVideoSegmentPadding:
         # Actually: target_dur = max(audio_dur, video_dur) + 2*pad_s = max(5,10) + 1 = 11
         assert cmd[t_idx + 1] == "11.0000"
 
-    @patch("marp2video.assembler.get_video_duration", return_value=5.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=3.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=5.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=3.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_tpad_triggered_by_padding(self, mock_run, mock_adur, mock_vdur, tmp_path):
         """Padding can cause padded audio to exceed video duration, triggering tpad."""
         video = tmp_path / "demo.mov"
@@ -330,8 +330,8 @@ class TestAssembleVideo:
             audios.append(aud)
         return images, audios
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=3.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=3.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_creates_concat_file(self, mock_run, mock_dur, tmp_path):
         images, audios = self._make_files(tmp_path, 2)
         output = tmp_path / "out.mp4"
@@ -345,8 +345,8 @@ class TestAssembleVideo:
         assert "segment_001.ts" in content
         assert "segment_002.ts" in content
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=3.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=3.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_calls_ffmpeg_for_each_segment_plus_concat(self, mock_run, mock_dur, tmp_path):
         images, audios = self._make_files(tmp_path, 3)
         output = tmp_path / "out.mp4"
@@ -357,9 +357,9 @@ class TestAssembleVideo:
         # 3 segment calls + 1 concat call = 4 total
         assert mock_run.call_count == 4
 
-    @patch("marp2video.assembler.get_video_duration", return_value=10.0)
-    @patch("marp2video.assembler.get_audio_duration", return_value=3.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_video_duration", return_value=10.0)
+    @patch("deck2video.assembler.get_audio_duration", return_value=3.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_mixed_image_and_video_segments(self, mock_run, mock_adur, mock_vdur, tmp_path):
         images, audios = self._make_files(tmp_path, 3)
         vid = tmp_path / "demo.mov"
@@ -383,8 +383,8 @@ class TestAssembleVideo:
         assert "-loop" in first_cmd
         assert "-loop" in third_cmd
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=3.0)
-    @patch("marp2video.assembler.subprocess.run")
+    @patch("deck2video.assembler.get_audio_duration", return_value=3.0)
+    @patch("deck2video.assembler.subprocess.run")
     def test_concat_failure_raises(self, mock_run, mock_dur, tmp_path):
         images, audios = self._make_files(tmp_path, 1)
         output = tmp_path / "out.mp4"
@@ -401,8 +401,8 @@ class TestAssembleVideo:
         with pytest.raises(RuntimeError, match="ffmpeg concat failed"):
             assemble_video(images, audios, output, temp_dir=tmp_path, fps=24)
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=3.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=3.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_videos_default_none(self, mock_run, mock_dur, tmp_path):
         """When videos param omitted, all segments should be image-based."""
         images, audios = self._make_files(tmp_path, 2)
@@ -416,8 +416,8 @@ class TestAssembleVideo:
             cmd = c[0][0]
             assert "-loop" in cmd
 
-    @patch("marp2video.assembler.get_audio_duration", return_value=3.0)
-    @patch("marp2video.assembler.subprocess.run", return_value=_ok_result())
+    @patch("deck2video.assembler.get_audio_duration", return_value=3.0)
+    @patch("deck2video.assembler.subprocess.run", return_value=_ok_result())
     def test_audio_padding_passed_to_segments(self, mock_run, mock_dur, tmp_path):
         images, audios = self._make_files(tmp_path, 2)
         output = tmp_path / "out.mp4"

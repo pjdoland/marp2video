@@ -1,4 +1,4 @@
-"""marp2video — Convert a Marp or Slidev markdown presentation into a narrated MP4 video."""
+"""deck2video — Convert a Marp or Slidev markdown presentation into a narrated MP4 video."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="marp2video",
+        prog="deck2video",
         description="Convert a Marp or Slidev markdown presentation into a narrated MP4 video.",
     )
     parser.add_argument("input", help="Path to the Marp or Slidev .md file")
@@ -82,16 +82,16 @@ def main() -> None:
         temp_dir.mkdir(parents=True, exist_ok=True)
         user_temp = True
     else:
-        temp_dir = Path(tempfile.mkdtemp(prefix="marp2video_"))
+        temp_dir = Path(tempfile.mkdtemp(prefix="deck2video_"))
         user_temp = False
 
     # Configure logging to file in the temp directory
-    log_path = temp_dir / "marp2video.log"
+    log_path = temp_dir / "deck2video.log"
     file_handler = logging.FileHandler(log_path, encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
-    logging.getLogger("marp2video").setLevel(logging.DEBUG)
-    logging.getLogger("marp2video").addHandler(file_handler)
+    logging.getLogger("deck2video").setLevel(logging.DEBUG)
+    logging.getLogger("deck2video").addHandler(file_handler)
 
     logger.info("CLI arguments: %s", vars(args))
     logger.info("Input: %s, Output: %s, Temp dir: %s", input_path, output_path, temp_dir)

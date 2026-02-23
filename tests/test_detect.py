@@ -1,8 +1,8 @@
-"""Tests for marp2video.detect — format auto-detection."""
+"""Tests for deck2video.detect — format auto-detection."""
 
 from __future__ import annotations
 
-from marp2video.detect import detect_format
+from deck2video.detect import detect_format
 
 
 class TestMarpDetection:

@@ -1,4 +1,4 @@
-"""Tests for marp2video.__main__ — CLI argument parsing and orchestration."""
+"""Tests for deck2video.__main__ — CLI argument parsing and orchestration."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from marp2video.models import Slide
+from deck2video.models import Slide
 
 
 # ---------------------------------------------------------------------------
@@ -19,26 +19,26 @@ from marp2video.models import Slide
 def _patch_pipeline(**overrides):
     """Return a dict of patches for all pipeline steps with sensible defaults."""
     defaults = {
-        "marp2video.__main__.check_ffmpeg": MagicMock(),
-        "marp2video.__main__.detect_format": MagicMock(return_value="marp"),
-        "marp2video.__main__.parse_marp": MagicMock(return_value=[
+        "deck2video.__main__.check_ffmpeg": MagicMock(),
+        "deck2video.__main__.detect_format": MagicMock(return_value="marp"),
+        "deck2video.__main__.parse_marp": MagicMock(return_value=[
             Slide(index=1, body="body", notes="Hello.", video=None),
             Slide(index=2, body="body", notes=None, video=None),
         ]),
-        "marp2video.__main__.parse_slidev": MagicMock(return_value=[
+        "deck2video.__main__.parse_slidev": MagicMock(return_value=[
             Slide(index=1, body="body", notes="Hello.", video=None),
             Slide(index=2, body="body", notes=None, video=None),
         ]),
-        "marp2video.__main__.render_slides": MagicMock(return_value=[
+        "deck2video.__main__.render_slides": MagicMock(return_value=[
             Path("/tmp/slides.001"), Path("/tmp/slides.002"),
         ]),
-        "marp2video.__main__.render_slidev_slides": MagicMock(return_value=[
+        "deck2video.__main__.render_slidev_slides": MagicMock(return_value=[
             Path("/tmp/slides.001.png"), Path("/tmp/slides.002.png"),
         ]),
-        "marp2video.__main__.generate_audio_for_slides": MagicMock(return_value=[
+        "deck2video.__main__.generate_audio_for_slides": MagicMock(return_value=[
             Path("/tmp/audio_001.wav"), Path("/tmp/audio_002.wav"),
         ]),
-        "marp2video.__main__.assemble_video": MagicMock(),
+        "deck2video.__main__.assemble_video": MagicMock(),
     }
     defaults.update(overrides)
     return defaults
@@ -51,13 +51,13 @@ def _patch_pipeline(**overrides):
 class TestArgParsing:
     def test_input_required(self):
         with pytest.raises(SystemExit):
-            from marp2video.__main__ import main
-            with patch("sys.argv", ["marp2video"]):
+            from deck2video.__main__ import main
+            with patch("sys.argv", ["deck2video"]):
                 main()
 
     def test_missing_input_file_exits(self, tmp_path):
-        from marp2video.__main__ import main
-        with patch("sys.argv", ["marp2video", str(tmp_path / "nonexistent.md")]):
+        from deck2video.__main__ import main
+        with patch("sys.argv", ["deck2video", str(tmp_path / "nonexistent.md")]):
             with pytest.raises(SystemExit):
                 main()
 
@@ -66,7 +66,7 @@ class TestArgParsing:
         md.write_text("---\nmarp: true\n---\n\n# Slide\n")
 
         patches = _patch_pipeline()
-        with patch("sys.argv", ["marp2video", str(md)]):
+        with patch("sys.argv", ["deck2video", str(md)]):
             for target, mock in patches.items():
                 with patch(target, mock):
                     pass
@@ -78,11 +78,11 @@ class TestArgParsing:
                 for target, mock_obj in patches.items():
                     mocks[target] = stack.enter_context(patch(target, mock_obj))
 
-                from marp2video.__main__ import main
+                from deck2video.__main__ import main
                 main()
 
                 # assemble_video should be called with output = talk.mp4
-                assemble_call = mocks["marp2video.__main__.assemble_video"]
+                assemble_call = mocks["deck2video.__main__.assemble_video"]
                 call_args = assemble_call.call_args
                 output_arg = call_args[0][2]  # third positional arg
                 assert output_arg == md.with_suffix(".mp4")
@@ -95,7 +95,7 @@ class TestArgParsing:
 class TestPipelineOrchestration:
     def _run_main(self, argv, patches):
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
         with patch("sys.argv", argv):
             with contextlib.ExitStack() as stack:
@@ -123,7 +123,7 @@ class TestPipelineOrchestration:
             patches[key] = MagicMock(side_effect=make_side_effect(key, original))
             patches[key].return_value = original.return_value
 
-        mocks = self._run_main(["marp2video", str(md)], patches)
+        mocks = self._run_main(["deck2video", str(md)], patches)
 
         assert "check_ffmpeg" in call_order
         assert "parse_marp" in call_order
@@ -142,11 +142,11 @@ class TestPipelineOrchestration:
         pron = tmp_path / "pron.json"
         pron.write_text(json.dumps({"kubectl": "cube control"}))
 
-        with patch("marp2video.__main__.load_pronunciations", return_value={"kubectl": "cube control"}) as mock_load:
+        with patch("deck2video.__main__.load_pronunciations", return_value={"kubectl": "cube control"}) as mock_load:
             patches = _patch_pipeline()
-            patches["marp2video.__main__.load_pronunciations"] = mock_load
+            patches["deck2video.__main__.load_pronunciations"] = mock_load
             mocks = self._run_main(
-                ["marp2video", str(md), "--pronunciations", str(pron)],
+                ["deck2video", str(md), "--pronunciations", str(pron)],
                 patches,
             )
             mock_load.assert_called_once()
@@ -155,9 +155,9 @@ class TestPipelineOrchestration:
         md = tmp_path / "deck.md"
         md.write_text("---\nmarp: true\n---\n\n# Slide\n")
 
-        with patch("sys.argv", ["marp2video", str(md), "--pronunciations", "/no/such/file.json"]):
-            from marp2video.__main__ import main
-            with patch("marp2video.__main__.check_ffmpeg"):
+        with patch("sys.argv", ["deck2video", str(md), "--pronunciations", "/no/such/file.json"]):
+            from deck2video.__main__ import main
+            with patch("deck2video.__main__.check_ffmpeg"):
                 with pytest.raises(SystemExit):
                     main()
 
@@ -179,16 +179,16 @@ class TestVideoPathResolution:
 
         slides = [Slide(index=1, body="body", notes=None, video="assets/demo.mov")]
         patches = _patch_pipeline(**{
-            "marp2video.__main__.parse_marp": MagicMock(return_value=slides),
-            "marp2video.__main__.render_slides": MagicMock(return_value=[Path("/tmp/slides.001")]),
-            "marp2video.__main__.generate_audio_for_slides": MagicMock(return_value=[Path("/tmp/audio_001.wav")]),
-            "marp2video.__main__.get_video_fps": MagicMock(return_value=30.0),
+            "deck2video.__main__.parse_marp": MagicMock(return_value=slides),
+            "deck2video.__main__.render_slides": MagicMock(return_value=[Path("/tmp/slides.001")]),
+            "deck2video.__main__.generate_audio_for_slides": MagicMock(return_value=[Path("/tmp/audio_001.wav")]),
+            "deck2video.__main__.get_video_fps": MagicMock(return_value=30.0),
         })
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md)]):
+        with patch("sys.argv", ["deck2video", str(md)]):
             with contextlib.ExitStack() as stack:
                 mocks = {}
                 for target, mock_obj in patches.items():
@@ -196,7 +196,7 @@ class TestVideoPathResolution:
                 main()
 
                 # assemble_video should receive the resolved video path
-                assemble_call = mocks["marp2video.__main__.assemble_video"]
+                assemble_call = mocks["deck2video.__main__.assemble_video"]
                 call_kwargs = assemble_call.call_args[1]
                 videos = call_kwargs["videos"]
                 assert videos[0] == video_file.resolve()
@@ -207,13 +207,13 @@ class TestVideoPathResolution:
 
         slides = [Slide(index=1, body="body", notes=None, video="missing.mov")]
         patches = _patch_pipeline(**{
-            "marp2video.__main__.parse_marp": MagicMock(return_value=slides),
+            "deck2video.__main__.parse_marp": MagicMock(return_value=slides),
         })
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md)]):
+        with patch("sys.argv", ["deck2video", str(md)]):
             with contextlib.ExitStack() as stack:
                 for target, mock_obj in patches.items():
                     stack.enter_context(patch(target, mock_obj))
@@ -227,13 +227,13 @@ class TestVideoPathResolution:
 
         slides = [Slide(index=1, body="body", notes=None, video="../../etc/passwd")]
         patches = _patch_pipeline(**{
-            "marp2video.__main__.parse_marp": MagicMock(return_value=slides),
+            "deck2video.__main__.parse_marp": MagicMock(return_value=slides),
         })
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md)]):
+        with patch("sys.argv", ["deck2video", str(md)]):
             with contextlib.ExitStack() as stack:
                 for target, mock_obj in patches.items():
                     stack.enter_context(patch(target, mock_obj))
@@ -253,16 +253,16 @@ class TestFpsAutoDetection:
         patches = _patch_pipeline()
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md), "--fps", "60"]):
+        with patch("sys.argv", ["deck2video", str(md), "--fps", "60"]):
             with contextlib.ExitStack() as stack:
                 mocks = {}
                 for target, mock_obj in patches.items():
                     mocks[target] = stack.enter_context(patch(target, mock_obj))
                 main()
 
-                assemble_call = mocks["marp2video.__main__.assemble_video"]
+                assemble_call = mocks["deck2video.__main__.assemble_video"]
                 assert assemble_call.call_args[1]["fps"] == 60
 
     def test_default_fps_is_24(self, tmp_path):
@@ -272,16 +272,16 @@ class TestFpsAutoDetection:
         patches = _patch_pipeline()
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md)]):
+        with patch("sys.argv", ["deck2video", str(md)]):
             with contextlib.ExitStack() as stack:
                 mocks = {}
                 for target, mock_obj in patches.items():
                     mocks[target] = stack.enter_context(patch(target, mock_obj))
                 main()
 
-                assemble_call = mocks["marp2video.__main__.assemble_video"]
+                assemble_call = mocks["deck2video.__main__.assemble_video"]
                 assert assemble_call.call_args[1]["fps"] == 24
 
 
@@ -292,7 +292,7 @@ class TestFpsAutoDetection:
 class TestAudioPadding:
     def _run_main(self, argv, patches):
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
         with patch("sys.argv", argv):
             with contextlib.ExitStack() as stack:
@@ -306,8 +306,8 @@ class TestAudioPadding:
         md = tmp_path / "deck.md"
         md.write_text("---\nmarp: true\n---\n\n# Slide\n")
 
-        mocks = self._run_main(["marp2video", str(md)], _patch_pipeline())
-        assemble_call = mocks["marp2video.__main__.assemble_video"]
+        mocks = self._run_main(["deck2video", str(md)], _patch_pipeline())
+        assemble_call = mocks["deck2video.__main__.assemble_video"]
         assert assemble_call.call_args[1]["audio_padding_ms"] == 0
 
     def test_padding_passed_to_assembler(self, tmp_path):
@@ -315,10 +315,10 @@ class TestAudioPadding:
         md.write_text("---\nmarp: true\n---\n\n# Slide\n")
 
         mocks = self._run_main(
-            ["marp2video", str(md), "--audio-padding", "400"],
+            ["deck2video", str(md), "--audio-padding", "400"],
             _patch_pipeline(),
         )
-        assemble_call = mocks["marp2video.__main__.assemble_video"]
+        assemble_call = mocks["deck2video.__main__.assemble_video"]
         assert assemble_call.call_args[1]["audio_padding_ms"] == 400
 
 
@@ -335,9 +335,9 @@ class TestTempDirectory:
         patches = _patch_pipeline()
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md), "--temp-dir", str(custom_temp)]):
+        with patch("sys.argv", ["deck2video", str(md), "--temp-dir", str(custom_temp)]):
             with contextlib.ExitStack() as stack:
                 for target, mock_obj in patches.items():
                     stack.enter_context(patch(target, mock_obj))
@@ -353,7 +353,7 @@ class TestTempDirectory:
 class TestFormatRouting:
     def _run_main(self, argv, patches):
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
         with patch("sys.argv", argv):
             with contextlib.ExitStack() as stack:
@@ -368,57 +368,57 @@ class TestFormatRouting:
         md.write_text("---\nmarp: true\n---\n\n# Slide\n")
 
         patches = _patch_pipeline()
-        mocks = self._run_main(["marp2video", str(md)], patches)
-        mocks["marp2video.__main__.detect_format"].assert_called_once()
+        mocks = self._run_main(["deck2video", str(md)], patches)
+        mocks["deck2video.__main__.detect_format"].assert_called_once()
 
     def test_explicit_marp_skips_detect(self, tmp_path):
         md = tmp_path / "deck.md"
         md.write_text("---\nmarp: true\n---\n\n# Slide\n")
 
         patches = _patch_pipeline()
-        mocks = self._run_main(["marp2video", str(md), "--format", "marp"], patches)
-        mocks["marp2video.__main__.detect_format"].assert_not_called()
+        mocks = self._run_main(["deck2video", str(md), "--format", "marp"], patches)
+        mocks["deck2video.__main__.detect_format"].assert_not_called()
 
     def test_explicit_slidev_skips_detect(self, tmp_path):
         md = tmp_path / "deck.md"
         md.write_text("---\ntransition: fade\n---\n\n# Slide\n")
 
         patches = _patch_pipeline()
-        mocks = self._run_main(["marp2video", str(md), "--format", "slidev"], patches)
-        mocks["marp2video.__main__.detect_format"].assert_not_called()
+        mocks = self._run_main(["deck2video", str(md), "--format", "slidev"], patches)
+        mocks["deck2video.__main__.detect_format"].assert_not_called()
 
     def test_marp_format_uses_marp_pipeline(self, tmp_path):
         md = tmp_path / "deck.md"
         md.write_text("---\nmarp: true\n---\n\n# Slide\n")
 
         patches = _patch_pipeline()
-        mocks = self._run_main(["marp2video", str(md), "--format", "marp"], patches)
-        mocks["marp2video.__main__.parse_marp"].assert_called_once()
-        mocks["marp2video.__main__.render_slides"].assert_called_once()
-        mocks["marp2video.__main__.parse_slidev"].assert_not_called()
-        mocks["marp2video.__main__.render_slidev_slides"].assert_not_called()
+        mocks = self._run_main(["deck2video", str(md), "--format", "marp"], patches)
+        mocks["deck2video.__main__.parse_marp"].assert_called_once()
+        mocks["deck2video.__main__.render_slides"].assert_called_once()
+        mocks["deck2video.__main__.parse_slidev"].assert_not_called()
+        mocks["deck2video.__main__.render_slidev_slides"].assert_not_called()
 
     def test_slidev_format_uses_slidev_pipeline(self, tmp_path):
         md = tmp_path / "deck.md"
         md.write_text("---\ntransition: fade\n---\n\n# Slide\n")
 
         patches = _patch_pipeline()
-        mocks = self._run_main(["marp2video", str(md), "--format", "slidev"], patches)
-        mocks["marp2video.__main__.parse_slidev"].assert_called_once()
-        mocks["marp2video.__main__.render_slidev_slides"].assert_called_once()
-        mocks["marp2video.__main__.parse_marp"].assert_not_called()
-        mocks["marp2video.__main__.render_slides"].assert_not_called()
+        mocks = self._run_main(["deck2video", str(md), "--format", "slidev"], patches)
+        mocks["deck2video.__main__.parse_slidev"].assert_called_once()
+        mocks["deck2video.__main__.render_slidev_slides"].assert_called_once()
+        mocks["deck2video.__main__.parse_marp"].assert_not_called()
+        mocks["deck2video.__main__.render_slides"].assert_not_called()
 
     def test_auto_detected_slidev_uses_slidev_pipeline(self, tmp_path):
         md = tmp_path / "deck.md"
         md.write_text("---\ntransition: fade\n---\n\n# Slide\n")
 
         patches = _patch_pipeline(**{
-            "marp2video.__main__.detect_format": MagicMock(return_value="slidev"),
+            "deck2video.__main__.detect_format": MagicMock(return_value="slidev"),
         })
-        mocks = self._run_main(["marp2video", str(md)], patches)
-        mocks["marp2video.__main__.parse_slidev"].assert_called_once()
-        mocks["marp2video.__main__.render_slidev_slides"].assert_called_once()
+        mocks = self._run_main(["deck2video", str(md)], patches)
+        mocks["deck2video.__main__.parse_slidev"].assert_called_once()
+        mocks["deck2video.__main__.render_slidev_slides"].assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -431,15 +431,15 @@ class TestPipelineFailure:
         md.write_text("---\nmarp: true\n---\n\n# Slide\n")
 
         patches = _patch_pipeline(**{
-            "marp2video.__main__.assemble_video": MagicMock(
+            "deck2video.__main__.assemble_video": MagicMock(
                 side_effect=RuntimeError("ffmpeg exploded")
             ),
         })
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md)]):
+        with patch("sys.argv", ["deck2video", str(md)]):
             with contextlib.ExitStack() as stack:
                 for target, mock_obj in patches.items():
                     stack.enter_context(patch(target, mock_obj))
@@ -453,9 +453,9 @@ class TestPipelineFailure:
         patches = _patch_pipeline()
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md), "--keep-temp",
+        with patch("sys.argv", ["deck2video", str(md), "--keep-temp",
                                  "--temp-dir", str(tmp_path / "build")]):
             with contextlib.ExitStack() as stack:
                 for target, mock_obj in patches.items():
@@ -473,9 +473,9 @@ class TestPipelineFailure:
         patches = _patch_pipeline()
 
         import contextlib
-        from marp2video.__main__ import main
+        from deck2video.__main__ import main
 
-        with patch("sys.argv", ["marp2video", str(md), "--keep-temp",
+        with patch("sys.argv", ["deck2video", str(md), "--keep-temp",
                                  "--temp-dir", str(build_dir)]):
             with contextlib.ExitStack() as stack:
                 for target, mock_obj in patches.items():

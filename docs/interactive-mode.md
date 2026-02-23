@@ -5,9 +5,9 @@ Interactive mode lets you listen to each slide's TTS audio and decide whether to
 ## Enabling interactive mode
 
 ```bash
-python -m marp2video deck.md --voice voice.wav --interactive
+python -m deck2video deck.md --voice voice.wav --interactive
 # or
-python -m marp2video deck.md --voice voice.wav -i
+python -m deck2video deck.md --voice voice.wav -i
 ```
 
 ## How it works

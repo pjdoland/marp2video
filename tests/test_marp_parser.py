@@ -1,4 +1,4 @@
-"""Tests for marp2video.marp_parser — Marp markdown parsing."""
+"""Tests for deck2video.marp_parser — Marp markdown parsing."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import textwrap
 
 import pytest
 
-from marp2video.marp_parser import parse_marp
-from marp2video.models import Slide
+from deck2video.marp_parser import parse_marp
+from deck2video.models import Slide
 
 
 # ---------------------------------------------------------------------------

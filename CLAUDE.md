@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Project Does
 
-marp2video converts Marp and Slidev markdown slide decks into narrated MP4 videos. It runs a 4-step pipeline: parse markdown into slides, render PNGs via marp-cli (or Slidev CLI), synthesize speech from speaker notes using Chatterbox TTS, and assemble everything into a video with ffmpeg. The presentation format is auto-detected but can be overridden with `--format marp|slidev`.
+deck2video converts Marp and Slidev markdown slide decks into narrated MP4 videos. It runs a 4-step pipeline: parse markdown into slides, render PNGs via marp-cli (or Slidev CLI), synthesize speech from speaker notes using Chatterbox TTS, and assemble everything into a video with ffmpeg. The presentation format is auto-detected but can be overridden with `--format marp|slidev`.
 
 ## Running the Tool
 
@@ -13,13 +13,13 @@ marp2video converts Marp and Slidev markdown slide decks into narrated MP4 video
 source setup.sh
 
 # Basic usage (auto-detects Marp or Slidev)
-python -m marp2video presentation.md --voice path/to/voice.wav
+python -m deck2video presentation.md --voice path/to/voice.wav
 
 # Explicit format override
-python -m marp2video presentation.md --format slidev --voice voice.wav
+python -m deck2video presentation.md --format slidev --voice voice.wav
 
 # With all TTS options
-python -m marp2video presentation.md \
+python -m deck2video presentation.md \
     --voice voice.wav \
     --device cpu \
     --exaggeration 0.5 \

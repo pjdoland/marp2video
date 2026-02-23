@@ -112,7 +112,7 @@ info "Activated $VENV_DIR"
 
 echo ""
 echo "Setup complete. You're ready to go:"
-echo "  python -m marp2video presentation.md --voice path/to/voice.wav"
+echo "  python -m deck2video presentation.md --voice path/to/voice.wav"
 echo ""
 
 set +euo pipefail

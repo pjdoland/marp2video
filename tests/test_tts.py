@@ -1,4 +1,4 @@
-"""Tests for marp2video.tts — TTS synthesis, pronunciation, sentence splitting."""
+"""Tests for deck2video.tts — TTS synthesis, pronunciation, sentence splitting."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from marp2video.tts import (
+from deck2video.tts import (
     _play_audio,
     _split_sentences,
     apply_pronunciations,
@@ -99,16 +99,16 @@ class TestPlayAudio:
     def test_macos_uses_afplay(self, tmp_path):
         p = tmp_path / "test.wav"
         p.write_bytes(b"fake")
-        with patch("marp2video.tts.platform.system", return_value="Darwin"), \
-             patch("marp2video.tts.subprocess.run") as mock_run:
+        with patch("deck2video.tts.platform.system", return_value="Darwin"), \
+             patch("deck2video.tts.subprocess.run") as mock_run:
             _play_audio(p)
         mock_run.assert_called_once_with(["afplay", str(p)], capture_output=True)
 
     def test_linux_uses_aplay(self, tmp_path):
         p = tmp_path / "test.wav"
         p.write_bytes(b"fake")
-        with patch("marp2video.tts.platform.system", return_value="Linux"), \
-             patch("marp2video.tts.subprocess.run") as mock_run:
+        with patch("deck2video.tts.platform.system", return_value="Linux"), \
+             patch("deck2video.tts.subprocess.run") as mock_run:
             _play_audio(p)
         mock_run.assert_called_once_with(["aplay", str(p)], capture_output=True)
 
@@ -116,7 +116,7 @@ class TestPlayAudio:
         p = tmp_path / "test.wav"
         p.write_bytes(b"fake")
         mock_startfile = MagicMock()
-        with patch("marp2video.tts.platform.system", return_value="Windows"), \
+        with patch("deck2video.tts.platform.system", return_value="Windows"), \
              patch.dict("os.__dict__", {"startfile": mock_startfile}):
             _play_audio(p)
         mock_startfile.assert_called_once_with(str(p))
@@ -124,8 +124,8 @@ class TestPlayAudio:
     def test_unknown_platform_warns(self, tmp_path, capsys):
         p = tmp_path / "test.wav"
         p.write_bytes(b"fake")
-        with patch("marp2video.tts.platform.system", return_value="HaikuOS"), \
-             patch("marp2video.tts.subprocess.run") as mock_run:
+        with patch("deck2video.tts.platform.system", return_value="HaikuOS"), \
+             patch("deck2video.tts.subprocess.run") as mock_run:
             _play_audio(p)
         mock_run.assert_not_called()
         captured = capsys.readouterr()
@@ -184,7 +184,7 @@ class TestSplitSentences:
 
 class TestResolveDevice:
     def _import_resolve(self):
-        from marp2video.tts import _resolve_device
+        from deck2video.tts import _resolve_device
         return _resolve_device
 
     def test_explicit_device_returned(self):
@@ -227,7 +227,7 @@ class TestGenerateAudioForSlides:
     """Test the orchestration logic with fully mocked TTS model."""
 
     def _make_slide(self, index, notes=None, video=None):
-        from marp2video.models import Slide
+        from deck2video.models import Slide
         return Slide(index=index, body="body", notes=notes, video=video)
 
     def test_all_silent_slides_skip_model_load(self, tmp_path):
@@ -243,8 +243,8 @@ class TestGenerateAudioForSlides:
             "torch": mock_torch,
             "torchaudio": mock_torchaudio,
         }):
-            with patch("marp2video.tts._load_model") as mock_load:
-                from marp2video.tts import generate_audio_for_slides
+            with patch("deck2video.tts._load_model") as mock_load:
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides,
                     temp_dir=tmp_path,
@@ -269,8 +269,8 @@ class TestGenerateAudioForSlides:
             "torch": mock_torch,
             "torchaudio": mock_torchaudio,
         }):
-            with patch("marp2video.tts._load_model"):
-                from marp2video.tts import generate_audio_for_slides
+            with patch("deck2video.tts._load_model"):
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides,
                     temp_dir=tmp_path,
@@ -310,8 +310,8 @@ class TestGenerateAudioForSlides:
             mock_torch.cat.return_value = mock_torch.zeros(1, 24000)
             mock_torch.zeros.return_value.cpu.return_value = mock_torch.zeros(1, 24000)
 
-            with patch("marp2video.tts._load_model", return_value=mock_model):
-                from marp2video.tts import generate_audio_for_slides
+            with patch("deck2video.tts._load_model", return_value=mock_model):
+                from deck2video.tts import generate_audio_for_slides
                 generate_audio_for_slides(
                     slides,
                     temp_dir=tmp_path,
@@ -342,8 +342,8 @@ class TestGenerateAudioForSlides:
             "torch": mock_torch,
             "torchaudio": mock_torchaudio,
         }):
-            with patch("marp2video.tts._load_model", return_value=mock_model):
-                from marp2video.tts import generate_audio_for_slides
+            with patch("deck2video.tts._load_model", return_value=mock_model):
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides,
                     temp_dir=tmp_path,
@@ -365,7 +365,7 @@ class TestInteractiveMode:
     """Test the interactive TTS review loop."""
 
     def _make_slide(self, index, notes=None, video=None):
-        from marp2video.models import Slide
+        from deck2video.models import Slide
         return Slide(index=index, body="body", notes=notes, video=video)
 
     def _setup_mocks(self):
@@ -389,10 +389,10 @@ class TestInteractiveMode:
         mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._play_audio") as mock_play, \
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._play_audio") as mock_play, \
                  patch("builtins.input", return_value="y"):
-                from marp2video.tts import generate_audio_for_slides
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None,
                     hold_duration=2.0, interactive=True,
@@ -409,10 +409,10 @@ class TestInteractiveMode:
         mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._play_audio"), \
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._play_audio"), \
                  patch("builtins.input", return_value=""):
-                from marp2video.tts import generate_audio_for_slides
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None,
                     hold_duration=2.0, interactive=True,
@@ -427,10 +427,10 @@ class TestInteractiveMode:
         mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._play_audio") as mock_play, \
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._play_audio") as mock_play, \
                  patch("builtins.input", side_effect=["n", "y"]):
-                from marp2video.tts import generate_audio_for_slides
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None,
                     hold_duration=2.0, interactive=True,
@@ -448,10 +448,10 @@ class TestInteractiveMode:
         mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._play_audio") as mock_play, \
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._play_audio") as mock_play, \
                  patch("builtins.input", side_effect=["r", "y"]):
-                from marp2video.tts import generate_audio_for_slides
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None,
                     hold_duration=2.0, interactive=True,
@@ -469,10 +469,10 @@ class TestInteractiveMode:
         mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._play_audio"), \
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._play_audio"), \
                  patch("builtins.input", return_value="q"):
-                from marp2video.tts import generate_audio_for_slides
+                from deck2video.tts import generate_audio_for_slides
                 with pytest.raises(SystemExit):
                     generate_audio_for_slides(
                         slides, temp_dir=tmp_path, voice_path=None,
@@ -485,10 +485,10 @@ class TestInteractiveMode:
         mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._play_audio") as mock_play, \
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._play_audio") as mock_play, \
                  patch("builtins.input") as mock_input:
-                from marp2video.tts import generate_audio_for_slides
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None,
                     hold_duration=2.0, interactive=True,
@@ -505,7 +505,7 @@ class TestInteractiveMode:
 
 class TestLoadModel:
     def test_load_model_calls_from_pretrained(self):
-        from marp2video.tts import _load_model
+        from deck2video.tts import _load_model
 
         mock_torch = MagicMock()
         mock_torch.cuda.is_available.return_value = False
@@ -531,7 +531,7 @@ class TestLoadModel:
 
 class TestMoveModelToCpu:
     def test_moves_all_components_to_cpu(self):
-        from marp2video.tts import _move_model_to_cpu
+        from deck2video.tts import _move_model_to_cpu
 
         mock_torch = MagicMock()
         mock_torch.backends.mps.is_available.return_value = False
@@ -550,7 +550,7 @@ class TestMoveModelToCpu:
         assert model.device == "cpu"
 
     def test_skips_none_conds(self):
-        from marp2video.tts import _move_model_to_cpu
+        from deck2video.tts import _move_model_to_cpu
 
         mock_torch = MagicMock()
         mock_torch.backends.mps.is_available.return_value = False
@@ -566,7 +566,7 @@ class TestMoveModelToCpu:
         assert model.device == "cpu"
 
     def test_clears_mps_cache(self):
-        from marp2video.tts import _move_model_to_cpu
+        from deck2video.tts import _move_model_to_cpu
 
         mock_torch = MagicMock()
         mock_torch.backends.mps.is_available.return_value = True
@@ -581,7 +581,7 @@ class TestMoveModelToCpu:
         mock_torch.mps.empty_cache.assert_called_once()
 
     def test_clears_cuda_cache(self):
-        from marp2video.tts import _move_model_to_cpu
+        from deck2video.tts import _move_model_to_cpu
 
         mock_torch = MagicMock()
         mock_torch.backends.mps.is_available.return_value = False
@@ -602,7 +602,7 @@ class TestMoveModelToCpu:
 
 class TestMultiChunkAndOOM:
     def _make_slide(self, index, notes=None):
-        from marp2video.models import Slide
+        from deck2video.models import Slide
         return Slide(index=index, body="body", notes=notes)
 
     def _setup_mocks(self, on_gpu=False):
@@ -627,8 +627,8 @@ class TestMultiChunkAndOOM:
         mock_torch, mock_torchaudio, mock_model = self._setup_mocks()
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model):
-                from marp2video.tts import generate_audio_for_slides
+            with patch("deck2video.tts._load_model", return_value=mock_model):
+                from deck2video.tts import generate_audio_for_slides
                 generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None, hold_duration=2.0,
                 )
@@ -653,9 +653,9 @@ class TestMultiChunkAndOOM:
         mock_model.generate.side_effect = generate_side_effect
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._move_model_to_cpu") as mock_move:
-                from marp2video.tts import generate_audio_for_slides
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._move_model_to_cpu") as mock_move:
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None, hold_duration=2.0,
                 )
@@ -671,9 +671,9 @@ class TestMultiChunkAndOOM:
         mock_model.generate.side_effect = RuntimeError("MPS backend out of memory")
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._move_model_to_cpu"):
-                from marp2video.tts import generate_audio_for_slides
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._move_model_to_cpu"):
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None, hold_duration=3.0,
                 )
@@ -697,8 +697,8 @@ class TestMultiChunkAndOOM:
         mock_torch.cat.return_value = mock_torch.zeros(1, 24000)
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model):
-                from marp2video.tts import generate_audio_for_slides
+            with patch("deck2video.tts._load_model", return_value=mock_model):
+                from deck2video.tts import generate_audio_for_slides
                 generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None, hold_duration=2.0,
                 )
@@ -713,7 +713,7 @@ class TestMultiChunkAndOOM:
 
 class TestInteractiveRegenFailure:
     def _make_slide(self, index, notes=None):
-        from marp2video.models import Slide
+        from deck2video.models import Slide
         return Slide(index=index, body="body", notes=notes)
 
     def test_regen_failure_keeps_previous_audio(self, tmp_path, capsys):
@@ -742,10 +742,10 @@ class TestInteractiveRegenFailure:
         mock_torch.cat.return_value = mock_torch.zeros(1, 24000)
 
         with patch.dict("sys.modules", {"torch": mock_torch, "torchaudio": mock_torchaudio}):
-            with patch("marp2video.tts._load_model", return_value=mock_model), \
-                 patch("marp2video.tts._play_audio"), \
+            with patch("deck2video.tts._load_model", return_value=mock_model), \
+                 patch("deck2video.tts._play_audio"), \
                  patch("builtins.input", side_effect=["n", "y"]):
-                from marp2video.tts import generate_audio_for_slides
+                from deck2video.tts import generate_audio_for_slides
                 paths = generate_audio_for_slides(
                     slides, temp_dir=tmp_path, voice_path=None,
                     hold_duration=2.0, interactive=True,

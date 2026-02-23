@@ -1,4 +1,4 @@
-"""Tests for marp2video.utils — ffmpeg helpers and WAV generation."""
+"""Tests for deck2video.utils — ffmpeg helpers and WAV generation."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from marp2video.utils import (
+from deck2video.utils import (
     check_ffmpeg,
     generate_silent_wav,
     get_audio_duration,
@@ -108,21 +108,21 @@ class TestGenerateSilentWav:
 
 class TestCheckFfmpeg:
     def test_passes_when_both_available(self):
-        with patch("marp2video.utils.shutil.which", return_value="/usr/bin/ffmpeg"):
+        with patch("deck2video.utils.shutil.which", return_value="/usr/bin/ffmpeg"):
             # Should not raise or exit
             check_ffmpeg()
 
     def test_exits_when_ffmpeg_missing(self):
         def fake_which(name):
             return None  # everything missing
-        with patch("marp2video.utils.shutil.which", side_effect=fake_which):
+        with patch("deck2video.utils.shutil.which", side_effect=fake_which):
             with pytest.raises(SystemExit):
                 check_ffmpeg()
 
     def test_exits_when_ffprobe_missing(self):
         def fake_which(name):
             return "/usr/bin/ffmpeg" if name == "ffmpeg" else None
-        with patch("marp2video.utils.shutil.which", side_effect=fake_which):
+        with patch("deck2video.utils.shutil.which", side_effect=fake_which):
             with pytest.raises(SystemExit):
                 check_ffmpeg()
 
@@ -143,7 +143,7 @@ def _mock_ffprobe_result(duration_str: str):
 
 class TestGetAudioDuration:
     def test_returns_duration(self, tmp_path):
-        with patch("marp2video.utils.subprocess.run", return_value=_mock_ffprobe_result("3.456")):
+        with patch("deck2video.utils.subprocess.run", return_value=_mock_ffprobe_result("3.456")):
             d = get_audio_duration(tmp_path / "audio.wav")
             assert d == pytest.approx(3.456)
 
@@ -151,14 +151,14 @@ class TestGetAudioDuration:
         result = MagicMock()
         result.returncode = 1
         result.stderr = "error"
-        with patch("marp2video.utils.subprocess.run", return_value=result):
+        with patch("deck2video.utils.subprocess.run", return_value=result):
             with pytest.raises(RuntimeError, match="ffprobe failed"):
                 get_audio_duration(tmp_path / "audio.wav")
 
 
 class TestGetVideoDuration:
     def test_returns_duration(self, tmp_path):
-        with patch("marp2video.utils.subprocess.run", return_value=_mock_ffprobe_result("12.5")):
+        with patch("deck2video.utils.subprocess.run", return_value=_mock_ffprobe_result("12.5")):
             d = get_video_duration(tmp_path / "video.mp4")
             assert d == pytest.approx(12.5)
 
@@ -177,25 +177,25 @@ class TestGetVideoFps:
         return result
 
     def test_integer_fps(self, tmp_path):
-        with patch("marp2video.utils.subprocess.run", return_value=self._mock_fps_result("30/1")):
+        with patch("deck2video.utils.subprocess.run", return_value=self._mock_fps_result("30/1")):
             assert get_video_fps(tmp_path / "v.mp4") == pytest.approx(30.0)
 
     def test_fractional_fps(self, tmp_path):
-        with patch("marp2video.utils.subprocess.run", return_value=self._mock_fps_result("30000/1001")):
+        with patch("deck2video.utils.subprocess.run", return_value=self._mock_fps_result("30000/1001")):
             assert get_video_fps(tmp_path / "v.mp4") == pytest.approx(29.97, rel=1e-2)
 
     def test_24fps(self, tmp_path):
-        with patch("marp2video.utils.subprocess.run", return_value=self._mock_fps_result("24/1")):
+        with patch("deck2video.utils.subprocess.run", return_value=self._mock_fps_result("24/1")):
             assert get_video_fps(tmp_path / "v.mp4") == pytest.approx(24.0)
 
     def test_60fps(self, tmp_path):
-        with patch("marp2video.utils.subprocess.run", return_value=self._mock_fps_result("60/1")):
+        with patch("deck2video.utils.subprocess.run", return_value=self._mock_fps_result("60/1")):
             assert get_video_fps(tmp_path / "v.mp4") == pytest.approx(60.0)
 
     def test_ffprobe_failure_raises(self, tmp_path):
         result = MagicMock()
         result.returncode = 1
         result.stderr = "no such file"
-        with patch("marp2video.utils.subprocess.run", return_value=result):
+        with patch("deck2video.utils.subprocess.run", return_value=result):
             with pytest.raises(RuntimeError, match="ffprobe failed"):
                 get_video_fps(tmp_path / "v.mp4")

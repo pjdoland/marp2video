@@ -1,4 +1,4 @@
-"""Shared fixtures for marp2video tests."""
+"""Shared fixtures for deck2video tests."""
 
 from __future__ import annotations
 
@@ -78,7 +78,7 @@ def tmp_deck_with_video(tmp_path):
 @pytest.fixture
 def silent_wav(tmp_path):
     """Generate a short silent WAV and return its path."""
-    from marp2video.utils import generate_silent_wav
+    from deck2video.utils import generate_silent_wav
 
     p = tmp_path / "silence.wav"
     generate_silent_wav(p, duration=1.0)

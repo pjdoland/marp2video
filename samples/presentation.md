@@ -93,7 +93,7 @@ style: |
 <!-- _class: lead -->
 <!-- _paginate: false -->
 
-# marp2video
+# deck2video
 
 ### Narrated Video Presentations from Markdown
 
@@ -125,12 +125,12 @@ style: |
 
 <!-- _class: lead -->
 
-# marp2video
+# deck2video
 
 Write slides in Markdown. Add speaker notes.
 Run one command. Get a narrated video.
 
-<!-- So in my free time I built this thing called marp2video. The idea is simple. You write your presentation in Markdown using the Marp format, put your narration in the speaker notes as HTML comments, and run a single command. The utility spits out an MP4 with narration in your own voice. And if you need to change something, you can edit the text and just regenerate the MP4. And all of this can run locally on your laptop. -->
+<!-- So in my free time I built this thing called deck2video. The idea is simple. You write your presentation in Markdown using Marp or Slidev, put your narration in the speaker notes as HTML comments, and run a single command. It auto-detects which format you're using. The tool spits out an MP4 with narration in your own voice. And if you need to change something, you can edit the text and just regenerate the MP4. And all of this can run locally on your laptop. -->
 
 ---
 
@@ -170,23 +170,23 @@ Run one command. Get a narrated video.
 ## How It Works
 
 ```
- .md file  ──▶  Parse  ──▶  Render  ──▶  TTS  ──▶  Assemble  ──▶  .mp4
-                  │           │           │            │
-              split slides  Marp CLI  Chatterbox    ffmpeg
-              extract notes  → PNG    → WAV per     → segment
-                                       slide         → concat
+ .md file  ──▶  Detect  ──▶  Parse  ──▶  Render  ──▶  TTS  ──▶  Assemble  ──▶  .mp4
+                  │            │           │            │            │
+              Marp or      split slides  Marp CLI   Chatterbox    ffmpeg
+              Slidev?      extract notes or Slidev   → WAV per    → segment
+                                          → PNG       slide        → concat
 ```
 
-<!-- Under the hood it's a four-stage pipeline. Parse the Markdown, render slides as PNGs with Marp CLI, synthesize audio with Chatterbox TTS, and stitch it all together with ffmpeg. If you give it a short sample of your voice, the TTS clones you. It's not perfect, but it's surprisingly good. Let me walk through each stage. -->
+<!-- Under the hood it's a four-stage pipeline with an auto-detection step up front. The tool looks at your frontmatter and directive comments to figure out whether you're using Marp or Slidev. Then it parses the Markdown, renders slides as PNGs with the appropriate CLI, synthesizes audio with Chatterbox TTS, and stitches it all together with ffmpeg. If you give it a short sample of your voice, the TTS clones you. It's not perfect, but it's surprisingly good. Let me walk through each stage. -->
 
 ---
 
 ## Stage 1: Parsing
 
-- Splits the Markdown on `---` delimiters, the same separators Marp uses
+- Splits the Markdown on `---` delimiters
 - First block is YAML front matter (theme, styles) -- skipped
 - HTML comments are extracted as speaker notes
-- Marp directive comments like `<!-- _class: lead -->` are filtered out
+- Format-specific handling: Marp directive comments are filtered out; Slidev per-slide frontmatter is stripped
 - Each slide becomes a `Slide` dataclass: index, body text, and notes
 
 ```python
@@ -197,23 +197,27 @@ class Slide:
     notes: str | None
 ```
 
-<!-- Parsing is the boring part. Split on triple-dash delimiters, skip the YAML front matter, pull out HTML comments as speaker notes. Marp uses HTML comments for its own directives too, things like underscore-class or underscore-paginate. Those get filtered out with a regex. What you're left with is a list of Slide dataclasses. -->
+<!-- Parsing is the boring part. Split on triple-dash delimiters, skip the YAML front matter, pull out HTML comments as speaker notes. There are separate parsers for Marp and Slidev because they handle metadata differently. Marp uses HTML comments for directives like underscore-class or underscore-paginate, so those get filtered out. Slidev uses per-slide frontmatter blocks, so those get stripped instead. Either way, what you're left with is a list of Slide dataclasses. -->
 
 ---
 
 ## Stage 2: Rendering
 
-- Calls Marp CLI via `npx @marp-team/marp-cli` or a global `marp` install
-- Renders the entire deck as PNG images at 2x scale for 1920x1080 output
+- Marp: calls `npx @marp-team/marp-cli` or a global `marp` install
+- Slidev: calls `npx slidev export` or a global `slidev` install
+- Both render the entire deck as PNG images for 1920x1080 output
 - Output files are numbered: `slides.001`, `slides.002`, etc.
 - A sanity check confirms the image count matches the parsed slide count
 
 ```bash
+# Marp
 npx @marp-team/marp-cli presentation.md \
     --images png --image-scale 2 --output slides
+# Slidev
+npx slidev export presentation.md --format png --output slides
 ```
 
-<!-- Rendering is a subprocess call to Marp CLI. It checks for a global install first, falls back to npx. PNG output at 2x scale gets us nineteen twenty by ten eighty images. There's a sanity check: if the parser found 12 slides but Marp only produced 11 images, we bail out. Better to stop here than produce a video where slide 7's audio plays over slide 8's image. -->
+<!-- Rendering is a subprocess call to the appropriate CLI. For Marp it's marp-cli, for Slidev it's the Slidev CLI's export command. Both check for a global install first, then fall back to npx. PNG output gets us nineteen twenty by ten eighty images. There's a sanity check: if the parser found 12 slides but the renderer only produced 11 images, we bail out. Better to stop here than produce a video where slide 7's audio plays over slide 8's image. -->
 
 ---
 
@@ -285,9 +289,10 @@ all .ts files  ──▶  concat demuxer  ──▶  output.mp4
 
 ```bash
 source setup.sh
-python -m marp2video deck.md --voice my-voice.wav
+python -m deck2video deck.md --voice my-voice.wav
 ```
 
+- Works with Marp and Slidev — format is auto-detected, or force it with `--format`
 - Provide a short voice sample for cloning, or omit `--voice` for the default
 - GPU recommended — CPU works but is slower
 - Tune with `--exaggeration`, `--cfg-weight`, `--temperature`
@@ -299,11 +304,11 @@ python -m marp2video deck.md --voice my-voice.wav
 
 <!-- _class: lead -->
 
-This entire presentation was generated using *marp2video*.
+This entire presentation was generated using *deck2video*.
 
 No microphone. No recording session. Just a Markdown file.
 
-<!-- So, full disclosure. This presentation was generated with marp2video. And you can almost certainly tell. The cadence is a little off, some words land weird. But it still sounds better than what I would have actually recorded, which would be full of ums and ahs, pops, and breath sounds. The whole thing is a single Markdown file. If I needed to fix something, I'd edit the text and regenerate. The real me is probably getting coffee right now. -->
+<!-- So, full disclosure. This presentation was generated with deck2video. And you can almost certainly tell. The cadence is a little off, some words land weird. But it still sounds better than what I would have actually recorded, which would be full of ums and ahs, pops, and breath sounds. The whole thing is a single Markdown file. If I needed to fix something, I'd edit the text and regenerate. The real me is probably getting coffee right now. -->
 
 ---
 
@@ -317,7 +322,7 @@ No microphone. No recording session. Just a Markdown file.
 - 2.5 hrs building the tool with Claude Code
 - 30 min writing this deck in Vim
 
-https://github.com/pjdoland/marp2video
+https://github.com/pjdoland/deck2video
 
 *Questions?*
 
