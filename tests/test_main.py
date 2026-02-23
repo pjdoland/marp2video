@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from marp2video.parser import Slide
+from marp2video.models import Slide
 
 
 # ---------------------------------------------------------------------------

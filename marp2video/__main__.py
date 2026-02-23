@@ -12,8 +12,8 @@ from pathlib import Path
 
 from .assembler import assemble_video
 from .detect import detect_format
-from .parser import parse_marp
-from .renderer import render_slides
+from .marp_parser import parse_marp
+from .marp_renderer import render_slides
 from .slidev_parser import parse_slidev
 from .slidev_renderer import render_slidev_slides
 from .tts import generate_audio_for_slides, load_pronunciations

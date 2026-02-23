@@ -1,4 +1,4 @@
-"""Tests for marp2video.renderer — marp-cli wrapper."""
+"""Tests for marp2video.marp_renderer — marp-cli wrapper."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from marp2video.renderer import check_marp_cli, render_slides
+from marp2video.marp_renderer import check_marp_cli, render_slides
 
 
 # ---------------------------------------------------------------------------
@@ -16,15 +16,15 @@ from marp2video.renderer import check_marp_cli, render_slides
 
 class TestCheckMarpCli:
     def test_passes_when_marp_available(self):
-        with patch("marp2video.renderer.shutil.which", side_effect=lambda n: "/usr/bin/marp" if n == "marp" else None):
+        with patch("marp2video.marp_renderer.shutil.which", side_effect=lambda n: "/usr/bin/marp" if n == "marp" else None):
             check_marp_cli()  # should not raise
 
     def test_passes_when_npx_available(self):
-        with patch("marp2video.renderer.shutil.which", side_effect=lambda n: "/usr/bin/npx" if n == "npx" else None):
+        with patch("marp2video.marp_renderer.shutil.which", side_effect=lambda n: "/usr/bin/npx" if n == "npx" else None):
             check_marp_cli()  # should not raise
 
     def test_exits_when_neither_available(self):
-        with patch("marp2video.renderer.shutil.which", return_value=None):
+        with patch("marp2video.marp_renderer.shutil.which", return_value=None):
             with pytest.raises(SystemExit):
                 check_marp_cli()
 
@@ -52,8 +52,8 @@ class TestRenderSlides:
         mock_result = MagicMock()
         mock_result.returncode = 0
 
-        with patch("marp2video.renderer.shutil.which", side_effect=which):
-            with patch("marp2video.renderer.subprocess.run", return_value=mock_result) as mock_run:
+        with patch("marp2video.marp_renderer.shutil.which", side_effect=which):
+            with patch("marp2video.marp_renderer.subprocess.run", return_value=mock_result) as mock_run:
                 render_slides("/tmp/deck.md", tmp_path, expected_count=3)
                 cmd = mock_run.call_args[0][0]
                 assert cmd[0] == "marp"
@@ -69,8 +69,8 @@ class TestRenderSlides:
         mock_result = MagicMock()
         mock_result.returncode = 0
 
-        with patch("marp2video.renderer.shutil.which", side_effect=which):
-            with patch("marp2video.renderer.subprocess.run", return_value=mock_result) as mock_run:
+        with patch("marp2video.marp_renderer.shutil.which", side_effect=which):
+            with patch("marp2video.marp_renderer.subprocess.run", return_value=mock_result) as mock_run:
                 render_slides("/tmp/deck.md", tmp_path, expected_count=2)
                 cmd = mock_run.call_args[0][0]
                 assert cmd[0] == "npx"
@@ -81,8 +81,8 @@ class TestRenderSlides:
         mock_result = MagicMock()
         mock_result.returncode = 0
 
-        with patch("marp2video.renderer.shutil.which", return_value="/usr/bin/marp"):
-            with patch("marp2video.renderer.subprocess.run", return_value=mock_result):
+        with patch("marp2video.marp_renderer.shutil.which", return_value="/usr/bin/marp"):
+            with patch("marp2video.marp_renderer.subprocess.run", return_value=mock_result):
                 images = render_slides("/tmp/deck.md", tmp_path, expected_count=3)
 
         assert len(images) == 3
@@ -95,8 +95,8 @@ class TestRenderSlides:
         mock_result.returncode = 1
         mock_result.stderr = "marp error"
 
-        with patch("marp2video.renderer.shutil.which", return_value="/usr/bin/marp"):
-            with patch("marp2video.renderer.subprocess.run", return_value=mock_result):
+        with patch("marp2video.marp_renderer.shutil.which", return_value="/usr/bin/marp"):
+            with patch("marp2video.marp_renderer.subprocess.run", return_value=mock_result):
                 with pytest.raises(RuntimeError, match="marp-cli exited"):
                     render_slides("/tmp/deck.md", tmp_path, expected_count=3)
 
@@ -106,8 +106,8 @@ class TestRenderSlides:
         mock_result = MagicMock()
         mock_result.returncode = 0
 
-        with patch("marp2video.renderer.shutil.which", return_value="/usr/bin/marp"):
-            with patch("marp2video.renderer.subprocess.run", return_value=mock_result):
+        with patch("marp2video.marp_renderer.shutil.which", return_value="/usr/bin/marp"):
+            with patch("marp2video.marp_renderer.subprocess.run", return_value=mock_result):
                 with pytest.raises(SystemExit):
                     render_slides("/tmp/deck.md", tmp_path, expected_count=3)
 
@@ -116,8 +116,8 @@ class TestRenderSlides:
         mock_result = MagicMock()
         mock_result.returncode = 0
 
-        with patch("marp2video.renderer.shutil.which", return_value="/usr/bin/marp"):
-            with patch("marp2video.renderer.subprocess.run", return_value=mock_result) as mock_run:
+        with patch("marp2video.marp_renderer.shutil.which", return_value="/usr/bin/marp"):
+            with patch("marp2video.marp_renderer.subprocess.run", return_value=mock_result) as mock_run:
                 render_slides("/tmp/deck.md", tmp_path, expected_count=1)
                 cmd = mock_run.call_args[0][0]
                 assert "--images" in cmd

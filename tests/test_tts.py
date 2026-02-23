@@ -216,7 +216,7 @@ class TestGenerateAudioForSlides:
     """Test the orchestration logic with fully mocked TTS model."""
 
     def _make_slide(self, index, notes=None, video=None):
-        from marp2video.parser import Slide
+        from marp2video.models import Slide
         return Slide(index=index, body="body", notes=notes, video=video)
 
     def test_all_silent_slides_skip_model_load(self, tmp_path):
@@ -354,7 +354,7 @@ class TestInteractiveMode:
     """Test the interactive TTS review loop."""
 
     def _make_slide(self, index, notes=None, video=None):
-        from marp2video.parser import Slide
+        from marp2video.models import Slide
         return Slide(index=index, body="body", notes=notes, video=video)
 
     def _setup_mocks(self):
