@@ -82,7 +82,8 @@ This means the parser found a different number of slides than the renderer produ
 
 ### A specific slide consistently sounds bad
 
-- Use `--interactive` mode to regenerate individual slides.
+- Use `--interactive` mode to regenerate individual slides during the initial run.
+- Use `--redo-slides` to regenerate specific slides after a completed run (e.g., `--redo-slides 3,6 --temp-dir ./build`). See [Examples](examples.md#redo-bad-slides-without-re-running-the-full-pipeline).
 - Rewrite the speaker notes to be simpler and more conversational.
 - Break long notes into shorter sentences.
 

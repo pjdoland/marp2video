@@ -28,6 +28,12 @@ python -m deck2video presentation.md \
     --pronunciations pronunciations.json \
     --audio-padding 300 \
     --output output.mp4
+
+# Reassemble from existing temp dir (skips parse/render/TTS)
+python -m deck2video presentation.md --reassemble --temp-dir ./build
+
+# Redo TTS for specific slides, then reassemble
+python -m deck2video presentation.md --redo-slides 2,5 --temp-dir ./build --voice voice.wav
 ```
 
 ### Pronunciation Overrides
@@ -46,7 +52,7 @@ Pass it with `--pronunciations pronunciations.json`. Matching is case-insensitiv
 
 ## Architecture
 
-The pipeline is orchestrated by `__main__.py` and flows through four modules in sequence:
+The pipeline is orchestrated by `__main__.py` and flows through four modules in sequence. Two alternative modes (`--reassemble` and `--redo-slides`) allow partial re-runs by reusing intermediate files from a previous `--temp-dir`:
 
 0. **detect.py** -- Auto-detects format (`"marp"` or `"slidev"`) by checking YAML frontmatter keys, directive comments, and Vue component syntax. Falls back to Marp. Skipped when `--format` is explicit.
 1. **marp_parser.py** / **slidev_parser.py** -- Splits markdown on `---` delimiters, extracts speaker notes from `<!-- -->` HTML comments into `Slide` dataclasses (index, body, notes). The Slidev parser additionally strips per-slide frontmatter and does not filter Marp-style directive comments.
@@ -63,6 +69,7 @@ The pipeline is orchestrated by `__main__.py` and flows through four modules in 
 - Subprocess calls use `capture_output=True`; stderr is printed only on failure.
 - Device auto-detection order: CUDA, MPS (Apple Silicon), CPU.
 - On pipeline failure, the temp directory is preserved for debugging. On success, it's cleaned up unless `--keep-temp` is set.
+- `--reassemble` and `--redo-slides` are mutually exclusive flags that require `--temp-dir`. They reuse existing intermediate files to avoid re-running the full pipeline.
 
 ## System Dependencies
 

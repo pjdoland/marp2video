@@ -217,6 +217,50 @@ python -m deck2video presentation.md \
     --output final-talk.mp4
 ```
 
+## Redo bad slides without re-running the full pipeline
+
+After a full run, suppose slides 3 and 6 had bad TTS output. Rather than
+re-running the entire pipeline:
+
+```bash
+# First run with a named temp directory
+python -m deck2video deck.md \
+    --voice voice.wav \
+    --temp-dir ./build \
+    --output talk.mp4
+
+# Listen to individual slides
+afplay ./build/audio_003.wav   # sounds bad
+afplay ./build/audio_006.wav   # also bad
+
+# Redo just those slides
+python -m deck2video deck.md \
+    --redo-slides 3,6 \
+    --temp-dir ./build \
+    --voice voice.wav \
+    --output talk.mp4
+```
+
+This re-parses the markdown, regenerates audio for slides 3 and 6 only, then
+reassembles the full video. All other slides keep their existing audio.
+
+## Reassemble after manual edits
+
+If you've manually edited audio WAV files in the temp directory (e.g., trimmed
+silence, applied noise reduction), you can reassemble without touching TTS:
+
+```bash
+python -m deck2video deck.md \
+    --reassemble \
+    --temp-dir ./build \
+    --audio-padding 200 \
+    --output talk.mp4
+```
+
+This picks up whatever `slides.*` and `audio_*.wav` files exist in `./build`
+and assembles a new MP4. You can also change `--fps` or `--audio-padding`
+without regenerating anything.
+
 ## CPU-only mode
 
 If you don't have a GPU or want to avoid GPU memory issues:

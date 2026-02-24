@@ -103,4 +103,4 @@ Focus on problem slides. If you know certain slides have tricky technical terms,
 
 Don't over-regenerate. The model is stochastic, so regenerating the same text gives different results each time. If the output is consistently bad, the issue is probably the text itself (too complex, abbreviations, etc.) rather than bad luck with the random seed.
 
-Combine with `--keep-temp` so you can inspect the individual WAV files after the run.
+Combine with `--keep-temp` or `--temp-dir` so you can inspect the individual WAV files after the run. If you later find a slide that needs fixing, use `--redo-slides` instead of re-running the full pipeline. See [Examples](examples.md#redo-bad-slides-without-re-running-the-full-pipeline).

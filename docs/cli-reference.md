@@ -152,6 +152,28 @@ Review and approve each slide's TTS audio before continuing.
 - **Details:** See [Interactive Mode](interactive-mode.md) for a full walkthrough.
 - **Example:** `--interactive` or `-i`
 
+### `--reassemble`
+
+Skip parsing, rendering, and TTS. Assemble the final MP4 directly from existing slide images and audio files in the temp directory.
+
+- **Type:** flag (no argument)
+- **Default:** off
+- **Requires:** `--temp-dir` pointing to a directory from a previous run
+- **Mutually exclusive with:** `--redo-slides`
+- **Details:** Discovers `slides.*` image files and `audio_*.wav` files in the temp directory. Validates that the counts match. Then runs only the assembly step. Useful after manually editing audio WAV files, or after changing `--audio-padding` or `--fps` without wanting to regenerate everything.
+- **Example:** `--reassemble --temp-dir ./build`
+
+### `--redo-slides`
+
+Regenerate TTS audio for specific slides, then reassemble the full video.
+
+- **Type:** string (comma-separated slide numbers, 1-based)
+- **Default:** none
+- **Requires:** `--temp-dir` pointing to a directory from a previous run, plus the original input `.md` file
+- **Mutually exclusive with:** `--reassemble`
+- **Details:** Re-parses the markdown to get current speaker notes, regenerates audio for only the listed slides (overwriting the existing WAV files in place), then reassembles the full video. Slide numbers are 1-based and match the indices shown during a normal run. All TTS options (`--voice`, `--exaggeration`, etc.) apply to the regenerated slides.
+- **Example:** `--redo-slides 2,5,7 --temp-dir ./build`
+
 ## Exit codes
 
 | Code | Meaning |
