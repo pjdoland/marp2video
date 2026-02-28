@@ -64,6 +64,15 @@ Path to a reference WAV file for Chatterbox voice cloning.
 - **Details:** See [Voice and TTS](voice-and-tts.md) for recommendations on reference audio quality and duration.
 - **Example:** `--voice ~/recordings/my-voice.wav`
 
+### `--language`
+
+Language code for multilingual TTS synthesis.
+
+- **Type:** string (BCP-47 language code)
+- **Default:** none (uses the standard English-optimised `ChatterboxTTS` model)
+- **Details:** When set, loads `ChatterboxMultilingualTTS` instead of `ChatterboxTTS` and passes the code as `language_id` to every generate call. Voice cloning (`--voice`) works with the multilingual model. Common codes: `en`, `fr`, `de`, `es`, `it`, `pt`, `zh`, `ja`, `ko`. See [Voice and TTS](voice-and-tts.md#multilingual-tts) for the full language list.
+- **Example:** `--language fr`
+
 ### `--device`
 
 Compute device for the TTS model.
