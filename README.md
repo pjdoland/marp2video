@@ -39,7 +39,7 @@ Detailed guides covering every feature and workflow:
 
 For Slidev presentations (optional):
 - **@slidev/cli** (`npm install -g @slidev/cli`)
-- **playwright-chromium** (`npx playwright install chromium`)
+- **playwright-chromium** (`npm install -g playwright-chromium && npx playwright install chromium`)
 
 On macOS:
 
@@ -121,6 +121,7 @@ python -m deck2video <input.md> [options]
 | `--format` | `auto` | Presentation format: `auto`, `marp`, or `slidev` |
 | `--output` | `<input>.mp4` | Output file path |
 | `--voice` | none | Reference WAV for voice cloning |
+| `--language` | none | Language code for multilingual TTS (e.g. `fr`, `zh`, `de`) |
 | `--device` | `auto` | Torch device: `auto`, `cpu`, `cuda`, `mps` |
 | `--exaggeration` | `0.5` | Chatterbox vocal exaggeration |
 | `--cfg-weight` | `0.5` | Chatterbox classifier-free guidance weight |
