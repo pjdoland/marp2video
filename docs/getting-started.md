@@ -19,12 +19,14 @@ For Slidev presentations (optional):
 
 ```bash
 brew install python@3.11 node ffmpeg
+npm install -g @marp-team/marp-cli   # recommended; avoids npx install prompts
 ```
 
 ### Linux (Ubuntu/Debian)
 
 ```bash
 sudo apt install python3.11 python3.11-venv nodejs npm ffmpeg
+npm install -g @marp-team/marp-cli   # recommended; avoids npx install prompts
 ```
 
 ### Slidev support (optional)

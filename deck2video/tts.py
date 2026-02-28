@@ -96,14 +96,20 @@ def _resolve_device(device: str) -> str:
     return "cpu"
 
 
-def _load_model(device: str = "auto"):
-    """Load ChatterboxTTS once."""
+def _load_model(device: str = "auto", language: str | None = None):
+    """Load ChatterboxTTS, or ChatterboxMultilingualTTS when language is set."""
     import torchaudio  # noqa: F401 — ensure it's importable early
-    from chatterbox.tts import ChatterboxTTS
 
     resolved = _resolve_device(device)
-    logger.debug("Loading ChatterboxTTS model on device=%s", resolved)
-    model = ChatterboxTTS.from_pretrained(device=resolved)
+    if language is not None:
+        from chatterbox.tts import ChatterboxMultilingualTTS
+        logger.debug("Loading ChatterboxMultilingualTTS on device=%s language=%s", resolved, language)
+        print(f"  Loading multilingual TTS model (language: {language})")
+        model = ChatterboxMultilingualTTS.from_pretrained(device=resolved)
+    else:
+        from chatterbox.tts import ChatterboxTTS
+        logger.debug("Loading ChatterboxTTS on device=%s", resolved)
+        model = ChatterboxTTS.from_pretrained(device=resolved)
     logger.debug("Model loaded successfully")
     return model
 
@@ -112,11 +118,15 @@ def _move_model_to_cpu(model):
     """Move all TTS model components to CPU and free GPU memory."""
     import torch
 
-    model.t3.to("cpu")
-    model.s3gen.to("cpu")
-    model.ve.to("cpu")
-    if model.conds is not None:
-        model.conds.to("cpu")
+    # Access known attributes defensively so this works for both
+    # ChatterboxTTS and ChatterboxMultilingualTTS.
+    for attr in ("t3", "s3gen", "ve"):
+        component = getattr(model, attr, None)
+        if component is not None:
+            component.to("cpu")
+    conds = getattr(model, "conds", None)
+    if conds is not None:
+        conds.to("cpu")
     model.device = "cpu"
 
     gc.collect()
@@ -136,6 +146,7 @@ def _generate_slide_audio(
     exaggeration: float,
     cfg_weight: float,
     temperature: float,
+    language: str | None,
     flush_fn,
 ):
     """Generate and return concatenated audio for a single slide's notes.
@@ -157,13 +168,15 @@ def _generate_slide_audio(
         for j, group in enumerate(sentence_groups):
             with torch.no_grad(), warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message=".*sdp_kernel.*", category=FutureWarning)
-                wav = model.generate(
-                    group,
+                generate_kwargs: dict = dict(
                     audio_prompt_path=voice_path,
                     exaggeration=exaggeration,
                     cfg_weight=cfg_weight,
                     temperature=temperature,
                 )
+                if language is not None:
+                    generate_kwargs["language_id"] = language
+                wav = model.generate(group, **generate_kwargs)
             chunks.append(wav.cpu())
             del wav
             flush_fn()
@@ -192,6 +205,7 @@ def generate_audio_for_slides(
     hold_duration: float,
     pronunciations: dict[str, str] | None = None,
     interactive: bool = False,
+    language: str | None = None,
 ) -> list[Path]:
     """Generate a WAV file for every slide. Returns list of audio paths.
 
@@ -203,7 +217,7 @@ def generate_audio_for_slides(
     """
     # Only import the heavy model when we actually need TTS.
     need_tts = any(s.notes for s in slides)
-    model = _load_model(device) if need_tts else None
+    model = _load_model(device, language) if need_tts else None
 
     import torch
     import torchaudio
@@ -248,6 +262,7 @@ def generate_audio_for_slides(
                 exaggeration=exaggeration,
                 cfg_weight=cfg_weight,
                 temperature=temperature,
+                language=language,
                 flush_fn=_flush_gpu,
             )
             try:

@@ -120,6 +120,9 @@ def main() -> None:
     parser.add_argument("input", help="Path to the Marp or Slidev .md file")
     parser.add_argument("--output", help="Output MP4 path (default: <input>.mp4)")
     parser.add_argument("--voice", help="Path to a reference WAV for Chatterbox voice cloning")
+    parser.add_argument("--language", default=None, metavar="LANG",
+                        help="Language code for multilingual TTS, e.g. en, fr, de, zh, es. "
+                             "Loads ChatterboxMultilingualTTS instead of ChatterboxTTS.")
     parser.add_argument("--device", default="auto",
                         help="Torch device: auto, cpu, cuda, or mps (default: auto)")
     parser.add_argument("--exaggeration", type=float, default=0.5,
@@ -269,6 +272,7 @@ def main() -> None:
                 hold_duration=args.hold_duration,
                 pronunciations=pronunciations,
                 interactive=args.interactive,
+                language=args.language,
             )
             logger.info("[redo] Audio regeneration completed in %.2fs", time.monotonic() - t0)
 
@@ -333,6 +337,7 @@ def main() -> None:
                 hold_duration=args.hold_duration,
                 pronunciations=pronunciations,
                 interactive=args.interactive,
+                language=args.language,
             )
             logger.info("[3/4] Audio generation completed in %.2fs", time.monotonic() - t0)
 

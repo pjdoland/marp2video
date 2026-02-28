@@ -74,7 +74,8 @@ class TestRenderSlides:
                 render_slides("/tmp/deck.md", tmp_path, expected_count=2)
                 cmd = mock_run.call_args[0][0]
                 assert cmd[0] == "npx"
-                assert cmd[1] == "@marp-team/marp-cli"
+                assert cmd[1] == "--yes"
+                assert cmd[2] == "@marp-team/marp-cli"
 
     def test_returns_sorted_paths(self, tmp_path):
         self._setup_marp_output(tmp_path, 3)

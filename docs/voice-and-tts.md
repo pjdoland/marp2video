@@ -197,6 +197,28 @@ python -m deck2video deck.md --pronunciations pronunciations.json
 - The number of loaded overrides is printed at startup: `Loaded 8 pronunciation override(s)`.
 - Replacements are applied to each slide's notes text before it's sent to the TTS model. The original notes are modified in place.
 
+## Multilingual TTS
+
+deck2video supports [Chatterbox's multilingual model](https://github.com/resemble-ai/chatterbox#chatterbox-and-chatterbox-multilingual), which covers 23 languages. Pass a BCP-47 language code with `--language`:
+
+```bash
+python -m deck2video deck.md --language fr --voice voice.wav
+python -m deck2video deck.md --language zh
+python -m deck2video deck.md --language de --voice voice.wav
+```
+
+When `--language` is set, deck2video loads `ChatterboxMultilingualTTS` instead of `ChatterboxTTS`. Voice cloning (`--voice`) is supported with the multilingual model.
+
+### Supported language codes
+
+Common codes: `en` (English), `fr` (French), `de` (German), `es` (Spanish), `it` (Italian), `pt` (Portuguese), `zh` (Chinese), `ja` (Japanese), `ko` (Korean), `nl` (Dutch), `pl` (Polish), `ru` (Russian). See the [Chatterbox README](https://github.com/resemble-ai/chatterbox) for the full list of 23 supported languages.
+
+### Notes
+
+- Omitting `--language` always uses the standard `ChatterboxTTS` model (English-optimised, slightly smaller).
+- The multilingual model is a separate download from the standard model; expect a longer first-run load.
+- All other flags (`--exaggeration`, `--cfg-weight`, `--temperature`, `--pronunciations`, `--interactive`) work the same way with both models.
+
 ## Lazy model loading
 
 The TTS model is only loaded when needed. If no slides have speaker notes, the model is never loaded. Heavy imports (`torch`, `torchaudio`, `chatterbox`) happen at model load time, not at startup, so the parse and render steps stay fast even on machines without GPU support.

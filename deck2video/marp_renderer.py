@@ -38,7 +38,9 @@ def render_slides(input_md: str, temp_dir: Path, expected_count: int) -> list[Pa
     if shutil.which("marp"):
         cmd = ["marp"]
     else:
-        cmd = ["npx", "@marp-team/marp-cli"]
+        # --yes auto-accepts the "Need to install @marp-team/marp-cli" prompt
+        # so the pipeline never hangs waiting for hidden interactive input.
+        cmd = ["npx", "--yes", "@marp-team/marp-cli"]
 
     cmd += [
         str(Path(input_md).resolve()),
@@ -50,8 +52,7 @@ def render_slides(input_md: str, temp_dir: Path, expected_count: int) -> list[Pa
 
     logger.debug("marp-cli command: %s", " ".join(cmd))
     print(f"  Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    logger.debug("marp-cli stdout: %s", result.stdout)
+    result = subprocess.run(cmd, stderr=subprocess.PIPE, text=True)
     logger.debug("marp-cli stderr: %s", result.stderr)
     if result.returncode != 0:
         print("marp-cli stderr:", result.stderr, file=sys.stderr)
