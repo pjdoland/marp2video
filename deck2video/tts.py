@@ -102,10 +102,23 @@ def _load_model(device: str = "auto", language: str | None = None):
 
     resolved = _resolve_device(device)
     if language is not None:
-        from chatterbox.tts import ChatterboxMultilingualTTS
+        import torch
+        from chatterbox.mtl_tts import ChatterboxMultilingualTTS
         logger.debug("Loading ChatterboxMultilingualTTS on device=%s language=%s", resolved, language)
         print(f"  Loading multilingual TTS model (language: {language})")
-        model = ChatterboxMultilingualTTS.from_pretrained(device=resolved)
+        # ChatterboxMultilingualTTS.from_pretrained doesn't honour the device
+        # argument when deserialising checkpoints, so torch.load may try to
+        # map tensors to CUDA even on a CPU-only machine.  Patch torch.load
+        # for the duration of the call to force the correct map_location.
+        _orig_load = torch.load
+        def _patched_load(*args, **kwargs):
+            kwargs["map_location"] = torch.device(resolved)
+            return _orig_load(*args, **kwargs)
+        torch.load = _patched_load
+        try:
+            model = ChatterboxMultilingualTTS.from_pretrained(device=resolved)
+        finally:
+            torch.load = _orig_load
     else:
         from chatterbox.tts import ChatterboxTTS
         logger.debug("Loading ChatterboxTTS on device=%s", resolved)
