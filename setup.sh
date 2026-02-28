@@ -41,7 +41,18 @@ info "ffprobe"
 if check_cmd marp; then
     info "marp-cli (global)"
 elif check_cmd npx; then
-    info "npx (will use npx @marp-team/marp-cli)"
+    # npx is available but marp isn't installed globally.  A global install is
+    # recommended: it's faster and avoids an interactive download prompt on
+    # the first run (even though deck2video now passes --yes to npx).
+    echo ""
+    printf "  marp-cli not found globally. Install it now (recommended)? [y/N] "
+    read -r answer
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        npm install -g @marp-team/marp-cli
+        info "marp-cli installed"
+    else
+        info "Skipping — will use npx @marp-team/marp-cli at runtime"
+    fi
 else
     fail "Neither marp nor npx found. Install Node.js or run: npm install -g @marp-team/marp-cli"
 fi
